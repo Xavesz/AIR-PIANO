@@ -3,138 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Air Piano - Loop Station</title>
+    <title>Air Piano Pro - Corrected Mirror</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
 
     <style>
-        :root { --neon: #00f2ff; --gold: #ffd700; --red: #ff4d4d; }
-        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { width: 100vw; height: 100vh; transform: scaleX(-1); }
+        :root { --neon: #00f2ff; --rec: #ff4d4d; --play: #00ff88; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        /* We remove the CSS transform: scaleX(-1) to fix the inverted text/hands */
+        canvas { width: 100vw; height: 100vh; }
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 100; }
         .hidden { display: none !important; }
-        button { padding: 25px 50px; font-size: 1.5rem; background: var(--neon); border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
-        #status { position: absolute; top: 20px; width: 100%; text-align: center; color: var(--neon); letter-spacing: 2px; }
+        #status-bar { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; font-size: 1.2rem; }
+        .btn-start { padding: 20px 50px; background: var(--neon); border: none; border-radius: 5px; cursor: pointer; font-size: 1.5rem; }
     </style>
 </head>
 <body>
 
     <div id="welcome" class="overlay">
-        <h1>AIR PIANO PRO</h1>
-        <p>👌 Right hand OK: Record Loop | 👌 Left hand OK: Play Loop</p>
-        <button id="startBtn">START SYSTEM</button>
+        <h1>TRUE-MIRROR PIANO</h1>
+        <p>Right Fist: REC | Left Fist: PLAY | Both Fists: CLEAR</p>
+        <button class="btn-start" onclick="initApp()">START ENGINE</button>
     </div>
 
-    <div id="status">MIRROR MODE: ACTIVE</div>
+    <div id="status-bar">
+        <span id="rec-ui">REC: OFF</span>
+        <span id="play-ui">LOOP: READY</span>
+    </div>
+
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], isRecording = false, loopStartTime = 0;
+let synth, recording = [], isRecording = false, isPlaying = false, loopStartTime = 0;
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
-const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+
+// 12 Notes for full finger range
+const pianoNotes = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
 let fingerStates = {};
 let drops = [];
 
-document.getElementById('startBtn').onclick = async () => {
+async function initApp() {
     await Tone.start();
-    // Refined High-Quality Piano Synth
     synth = new Tone.PolySynth(Tone.Synth, {
-        oscillator: { type: "fatsine4" },
-        envelope: { attack: 0.1, decay: 0.3, sustain: 0.4, release: 2 }
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.05, release: 1.5 }
     }).toDestination();
     document.getElementById('welcome').classList.add('hidden');
     startCamera();
-};
+}
 
-function isOkaySign(landmarks) {
-    const thumb = landmarks[4];
-    const index = landmarks[8];
-    const dist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
-    return dist < 0.05; // Very close together
+// Detect if hand is closed (Fist)
+function isFist(landmarks) {
+    // Distance between wrist (0) and middle fingertip (12)
+    const dist = Math.hypot(landmarks[12].x - landmarks[0].x, landmarks[12].y - landmarks[0].y);
+    return dist < 0.2; 
 }
 
 function spawnDrop(x, y, note) {
-    drops.push({ x, y, note, alpha: 1.0, ySpeed: 4 });
+    drops.push({ x, y, note, alpha: 1.0 });
 }
 
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    // Render Drops
+    // Draw Falling Drops
     drops.forEach((d, i) => {
-        d.y += d.ySpeed; d.alpha -= 0.015;
+        d.y += 5; d.alpha -= 0.02;
         canvasCtx.fillStyle = `rgba(0, 242, 255, ${d.alpha})`;
-        canvasCtx.font = "bold 20px sans-serif";
         canvasCtx.fillText(d.note, d.x, d.y);
         if (d.alpha <= 0) drops.splice(i, 1);
     });
 
     if (results.multiHandLandmarks && results.multiHandedness) {
+        let rightFist = false;
+        let leftFist = false;
+
         results.multiHandLandmarks.forEach((landmarks, hIdx) => {
-            // FIX INVERSION: Swap Left/Right labels
+            // Correcting Mirror: MediaPipe "Left" is actually "Right" when looking at screen
             let side = results.multiHandedness[hIdx].label === "Left" ? "Right" : "Left";
             
-            // Check for OKAY GESTURE
-            if (isOkaySign(landmarks)) {
-                if (side === "Right" && !isRecording) {
-                    isRecording = true; recording = []; loopStartTime = Date.now();
-                    document.getElementById('status').innerText = "🔴 RECORDING LOOP...";
-                }
-                if (side === "Left" && recording.length > 0) {
-                    playLoop();
-                }
+            if (isFist(landmarks)) {
+                if (side === "Right") rightFist = true;
+                if (side === "Left") leftFist = true;
             }
 
+            // Finger Mapping
             const tips = [4, 8, 12, 16, 20];
             const names = ["Thumb", "Index", "Middle", "Ring", "Pinky"];
 
             tips.forEach((id, fIdx) => {
                 const tip = landmarks[id];
+                // Manual Mirroring: (1 - tip.x) maps right to right, left to left
                 const x = (1 - tip.x) * canvasElement.width;
                 const y = tip.y * canvasElement.height;
                 
-                // Bend Detection
-                const isBent = tip.y > landmarks[id-2].y;
+                // Bend Rule: Tip Y is lower than the joint
+                const isBent = tip.y > landmarks[id-1].y;
                 const key = `${side}_${names[fIdx]}`;
 
-                if (isBent && !fingerStates[key]) {
-                    const lane = Math.floor(tip.x * notes.length);
-                    const note = notes[lane];
+                if (isBent && !fingerStates[key] && !isFist(landmarks)) {
+                    // Map X position to the pianoNotes array (Right = High, Left = Low)
+                    const noteIdx = Math.floor((1 - tip.x) * (pianoNotes.length - 1));
+                    const note = pianoNotes[noteIdx];
+                    
                     synth.triggerAttackRelease(note, "4n");
                     spawnDrop(x, y, note);
                     
                     if (isRecording) {
                         recording.push({ note, time: Date.now() - loopStartTime });
                     }
-                    
                     fingerStates[key] = true;
                 } else if (!isBent) {
                     fingerStates[key] = false;
                 }
 
-                // Visual Glow
-                canvasCtx.fillStyle = isBent ? "var(--gold)" : "white";
+                // UI Points
+                canvasCtx.fillStyle = isBent ? "var(--rec)" : "white";
                 canvasCtx.beginPath();
-                canvasCtx.arc(x, y, 10, 0, Math.PI*2);
+                canvasCtx.arc(x, y, 8, 0, Math.PI*2);
                 canvasCtx.fill();
-                canvasCtx.fillText(`${side} ${names[fIdx]}`, x - 30, y - 20);
+                canvasCtx.fillText(side + " " + names[fIdx], x - 20, y - 15);
             });
         });
+
+        // Loop Logic
+        if (rightFist && leftFist) {
+            recording = [];
+            document.getElementById('rec-ui').innerText = "REC: CLEARED";
+        } else if (rightFist) {
+            if (!isRecording) {
+                isRecording = true; loopStartTime = Date.now();
+                document.getElementById('rec-ui').innerText = "REC: ON 🔴";
+                document.getElementById('rec-ui').style.color = "red";
+            }
+        } else {
+            isRecording = false;
+            document.getElementById('rec-ui').innerText = "REC: OFF";
+            document.getElementById('rec-ui').style.color = "white";
+        }
+
+        if (leftFist && recording.length > 0 && !isPlaying) {
+            playLoop();
+        }
     }
     canvasCtx.restore();
 }
 
 function playLoop() {
-    document.getElementById('status').innerText = "🟢 PLAYING LOOP...";
+    isPlaying = true;
+    document.getElementById('play-ui').innerText = "LOOP: PLAYING 🟢";
     recording.forEach(event => {
         setTimeout(() => synth.triggerAttackRelease(event.note, "4n"), event.time);
     });
+    // Reset play state after the last note
+    const duration = recording[recording.length-1].time + 1000;
+    setTimeout(() => { 
+        isPlaying = false; 
+        document.getElementById('play-ui').innerText = "LOOP: READY";
+    }, duration);
 }
 
 const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
