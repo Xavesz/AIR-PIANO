@@ -3,133 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Air Piano - Secure Edition</title>
-    
+    <title>3D Cyber Piano - Pro Edition</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
 
     <style>
-        :root { --accent: #00f2ff; }
-        body { margin: 0; background: #050505; color: white; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        canvas { width: 100vw; height: 100vh; transform: scaleX(-1); filter: drop-shadow(0 0 10px rgba(0,242,255,0.2)); }
+        :root { --neon: #00f2ff; --bg: #0a0a0f; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+        canvas { width: 100vw; height: 100vh; transform: scaleX(-1); }
         
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 100; transition: 0.5s; }
-        .hidden { opacity: 0; pointer-events: none; }
+        /* Futuristic UI */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a2e 0%, #0a0a0f 100%); z-index: 100; text-align: center; }
+        .hidden { display: none !important; }
         
-        button { padding: 20px 40px; font-size: 1.5rem; font-weight: bold; background: var(--accent); border: none; border-radius: 50px; cursor: pointer; color: black; box-shadow: 0 0 20px var(--accent); }
-        button:active { transform: scale(0.95); }
+        button { padding: 20px 60px; font-size: 1.2rem; background: transparent; color: var(--neon); border: 2px solid var(--neon); border-radius: 5px; cursor: pointer; text-transform: uppercase; letter-spacing: 5px; box-shadow: 0 0 15px var(--neon); transition: 0.3s; }
+        button:hover { background: var(--neon); color: black; }
 
-        .status-bar { position: absolute; top: 10px; width: 100%; text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; }
+        /* Diagnostic HUD */
+        #hud { position: absolute; top: 20px; left: 20px; width: 220px; padding: 15px; background: rgba(0, 242, 255, 0.1); border-left: 3px solid var(--neon); font-size: 12px; pointer-events: none; }
+        .active-key { color: #ff0055; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="welcome" class="overlay">
-        <h1 style="margin-bottom: 10px;">3D AIR PIANO</h1>
-        <p style="margin-bottom: 30px; color: #aaa;">Place device on desk • Use 10 fingers in air</p>
-        <button onclick="initApp()">ACTIVATE SENSORS</button>
+        <h1 style="letter-spacing: 10px;">CYBER PIANO</h1>
+        <p style="color: #666;">BEND YOUR FINGERS TO PLAY • NO BORDERS</p>
+        <button id="startBtn">INITIALIZE SYSTEM</button>
     </div>
 
-    <div class="status-bar" id="status">Waiting for Camera...</div>
-    
+    <div id="hud">
+        <div style="color: var(--neon); margin-bottom: 10px;">SYSTEM DIAGNOSTICS</div>
+        <div id="handCount">HANDS DETECTED: 0</div>
+        <div id="fingerStatus">ACTIVE: NONE</div>
+        <div id="lastNote">LAST NOTE: ---</div>
+    </div>
+
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
+let synth;
+let audioStarted = false;
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
-const statusText = document.getElementById('status');
-
-// 1. Setup Sound (High Quality)
-const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: "triangle" },
-    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
-}).toDestination();
-
 const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-let lastPlayed = Array(10).fill(0); 
+let fingerState = Array(10).fill(false); // Track if finger is currently "bent"
 
-async function initApp() {
+document.getElementById('startBtn').onclick = async () => {
     await Tone.start();
+    synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "amsine" },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.8 }
+    }).toDestination();
+    audioStarted = true;
     document.getElementById('welcome').classList.add('hidden');
-    statusText.innerText = "Sensors Active - Tracking 10 Fingers";
     startCamera();
+};
+
+function checkCurl(landmarks, tipIdx) {
+    const wrist = landmarks[0];
+    const knuckle = landmarks[tipIdx - 3]; // Knuckle for that finger
+    const tip = landmarks[tipIdx];
+    
+    // Distance formula: sqrt((x2-x1)^2 + (y2-y1)^2)
+    const distWristTip = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+    const distWristKnuckle = Math.hypot(knuckle.x - wrist.x, knuckle.y - wrist.y);
+    
+    // If tip is closer to wrist than the knuckle is, the finger is "curled/bent"
+    return distWristTip < distWristKnuckle * 1.2; 
 }
 
-// 2. AI Hand Tracking Logic
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    // Draw Piano Visualizer
+    // Dynamic Visuals (No Hard Borders)
     const w = canvasElement.width / notes.length;
-    notes.forEach((_, i) => {
-        canvasCtx.strokeStyle = "rgba(0, 242, 255, 0.15)";
-        canvasCtx.strokeRect(i * w, canvasElement.height - 150, w, 150);
-    });
+    
+    if (results.multiHandLandmarks && audioStarted) {
+        document.getElementById('handCount').innerText = `HANDS DETECTED: ${results.multiHandLandmarks.length}`;
+        let activeFingers = [];
 
-    if (results.multiHandLandmarks) {
-        results.multiHandLandmarks.forEach((landmarks, handIdx) => {
-            // Track Finger Tips: Thumb(4), Index(8), Middle(12), Ring(16), Pinky(20)
+        results.multiHandLandmarks.forEach((landmarks, hIdx) => {
             const fingerTips = [4, 8, 12, 16, 20];
-            
-            fingerTips.forEach((id, fIdx) => {
-                const tip = landmarks[id];
+            const fingerNames = ["Thumb", "Index", "Middle", "Ring", "Pinky"];
+
+            fingerTips.forEach((tipId, fIdx) => {
+                const isBent = checkCurl(landmarks, tipId);
+                const globalIdx = fIdx + (hIdx * 5);
+                const tip = landmarks[tipId];
                 const x = tip.x * canvasElement.width;
                 const y = tip.y * canvasElement.height;
-                const depth = tip.z; // The "Pixel Depth" value
 
-                // DRAW FINGERMARKERS
-                canvasCtx.fillStyle = depth < -0.1 ? "#ff0055" : "#00f2ff";
-                canvasCtx.beginPath();
-                canvasCtx.arc(x, y, 12, 0, 2 * Math.PI);
-                canvasCtx.fill();
-
-                // 3. COLLISION DETECTION (THE PIANO HIT)
-                const lane = Math.floor(tip.x * notes.length);
-                const now = Date.now();
-                
-                // If finger is in the bottom half and depth is "pressed"
-                if (tip.y > 0.6 && depth < -0.12) {
-                    // Prevent rapid double-triggering (debounce)
-                    if (now - lastPlayed[fIdx + (handIdx * 5)] > 300) {
-                        synth.triggerAttackRelease(notes[lane], "8n");
-                        lastPlayed[fIdx + (handIdx * 5)] = now;
+                if (isBent) {
+                    activeFingers.push(fingerNames[fIdx]);
+                    if (!fingerState[globalIdx]) {
+                        const lane = Math.floor(tip.x * notes.length);
+                        synth.triggerAttack(notes[lane]);
+                        document.getElementById('lastNote').innerText = `LAST NOTE: ${notes[lane]}`;
                         
-                        // Flash effect on hit
-                        canvasCtx.fillStyle = "rgba(0, 242, 255, 0.3)";
-                        canvasCtx.fillRect(lane * w, 0, w, canvasElement.height);
+                        // Short time play: Fade out even if held
+                        setTimeout(() => synth.triggerRelease(notes[lane]), 600);
+                        fingerState[globalIdx] = true;
                     }
+                } else {
+                    fingerState[globalIdx] = false;
                 }
+
+                // Draw Cyber-Glow for fingers
+                canvasCtx.shadowBlur = isBent ? 20 : 0;
+                canvasCtx.shadowColor = "#00f2ff";
+                canvasCtx.fillStyle = isBent ? "#ff0055" : "rgba(0, 242, 255, 0.5)";
+                canvasCtx.beginPath();
+                canvasCtx.arc(x, y, isBent ? 15 : 8, 0, 2 * Math.PI);
+                canvasCtx.fill();
             });
         });
+        document.getElementById('fingerStatus').innerText = `ACTIVE: ${activeFingers.join(', ') || 'NONE'}`;
     }
     canvasCtx.restore();
 }
 
 const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-hands.setOptions({ 
-    maxNumHands: 2, 
-    modelComplexity: 1, 
-    minDetectionConfidence: 0.7, 
-    minTrackingConfidence: 0.7 
-});
+hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7 });
 hands.onResults(onResults);
 
 function startCamera() {
-    const camera = new Camera(videoElement, {
+    new Camera(videoElement, {
         onFrame: async () => {
             canvasElement.width = window.innerWidth;
             canvasElement.height = window.innerHeight;
             await hands.send({image: videoElement});
         },
         width: 1280, height: 720
-    });
-    camera.start().catch(() => {
-        alert("Camera Error: Please allow camera access and use HTTPS");
-    });
+    }).start();
 }
 </script>
 </body>
