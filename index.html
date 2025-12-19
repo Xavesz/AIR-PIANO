@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro | Ultimate Stage</title>
+    <title>Air Piano Pro | Pro-Grade Performance</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -13,78 +13,65 @@
         body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
         
-        /* Professional UI Layers */
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,5,10,0.98); z-index: 1000; transition: all 0.4s ease; }
-        .hidden { opacity: 0; pointer-events: none; display: none !important; }
+        /* GUI Layers */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.96); z-index: 1000; transition: opacity 0.3s; }
+        .hidden { display: none !important; }
         
-        .btn { padding: 14px 30px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 25px var(--neon); }
-        .btn-play { background: var(--play); border-color: var(--play); color: black; font-size: 1.4rem; }
+        .btn { padding: 12px 30px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 10px; text-transform: uppercase; }
+        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
 
-        /* HUD & Dashboard */
-        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 20px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
-        #side-dash { position: absolute; top: 100px; left: 20px; width: 220px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--neon); padding: 15px; z-index: 500; pointer-events: none; font-family: monospace; }
+        /* HUD & VLC */
+        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 15px; z-index: 500; background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent); }
+        #vlc-bar { position: absolute; bottom: 30px; width: 80%; left: 10%; background: rgba(20,20,30,0.9); padding: 15px; border-radius: 10px; z-index: 500; border: 1px solid #333; }
         
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 900; text-align: center; pointer-events: none; }
-        #timer-val { font-size: 10rem; font-weight: bold; line-height: 1; }
+        #timer-val { font-size: 10rem; font-weight: bold; color: var(--neon); }
 
-        .pane { background: #111; padding: 30px; border-radius: 8px; width: 85%; max-height: 70%; overflow-y: auto; border: 1px solid #333; }
-        .row { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        /* Performance Graphics */
+        .key-pop { position: absolute; font-size: 3rem; font-weight: 900; color: var(--neon); pointer-events: none; }
+        input[type=range] { width: 100%; accent-color: var(--neon); }
     </style>
 </head>
 <body>
 
     <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 3.5rem; letter-spacing: 15px; margin-bottom: 0;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
-        <p style="color: #666; margin-bottom: 40px;">THE ULTIMATE AIR-GESTURE INSTRUMENT</p>
-        
-        <button class="btn btn-play" onclick="launchPerformance()">Launch Stage</button>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" onclick="showPane('settings')">Mixer & Keys</button>
-            <button class="btn" onclick="showPane('library')">Saved Library</button>
-        </div>
-        <button class="btn" style="border-color:#555; color:#555" onclick="showPane('how-to')">How to Play</button>
+        <h1 style="font-size: 3rem; letter-spacing: 10px;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
+        <button class="btn" style="font-size: 1.5rem;" onclick="launchStage()">LAUNCH STAGE</button>
+        <button class="btn" onclick="showPane('mixer')">MIXER & KEYS</button>
+        <button class="btn" onclick="showPane('library')">SAVED LIBRARY</button>
     </div>
 
-    <div id="menu-settings" class="ui-layer hidden">
-        <div class="pane">
-            <h3>MASTER MIXER & KEY ASSIGNMENT</h3>
+    <div id="menu-mixer" class="ui-layer hidden">
+        <div style="background:#111; padding:30px; border-radius:10px; width:80%;">
+            <h3>AUDIO MIXER</h3>
             <div id="mixer-content"></div>
+            <button class="btn" onclick="showPane('main')">SAVE & EXIT</button>
         </div>
-        <button class="btn" onclick="showPane('main')">Save & Return</button>
     </div>
 
     <div id="menu-library" class="ui-layer hidden">
-        <div class="pane" id="library-content">
-            <h3>SAVED RECORDINGS</h3>
-            <p id="lib-empty">No tracks found. Save one during performance!</p>
-        </div>
-        <button class="btn" onclick="showPane('main')">Back to Menu</button>
-    </div>
-
-    <div id="menu-how-to" class="ui-layer hidden">
-        <div class="pane">
-            <h2>GESTURE GUIDE</h2>
-            <p>🔴 <b>Right Fist (3s):</b> Record / Stop</p>
-            <p>🟢 <b>Left Fist (3s):</b> Play Loop</p>
-            <p>🔵 <b>Both Hands Wide (7s):</b> Save to PC/Phone</p>
-            <p>🟣 <b>Both Fists (5s):</b> Wipe / New Session</p>
-            <button class="btn" onclick="showPane('main')">Got it</button>
+        <div style="background:#111; padding:30px; border-radius:10px; width:80%; max-height: 70%; overflow-y:auto;">
+            <h3>SAVED TUNES</h3>
+            <div id="lib-content">No recordings yet.</div>
+            <button class="btn" onclick="showPane('main')">BACK</button>
         </div>
     </div>
 
     <div id="hud-top" class="hidden">
-        <button class="btn" style="margin:0; padding: 5px 15px;" onclick="backToMenu()">EXIT TO MENU</button>
-        <div id="mode-pill" style="border: 1px solid var(--neon); padding: 5px 15px; color: var(--neon); font-weight: bold;">PERFORMING</div>
+        <button class="btn" style="margin:0" onclick="exitToMenu()">MENU</button>
+        <div id="mode-pill" style="color:var(--neon); border:1px solid var(--neon); padding:5px 15px; border-radius:5px;">PERFORM</div>
     </div>
 
-    <div id="side-dash" class="hidden">
-        <div style="color: var(--neon); font-size: 0.7rem; margin-bottom: 10px;">ENGINE STATUS</div>
-        <div id="live-notes">Waiting for input...</div>
+    <div id="vlc-bar" class="hidden">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <span id="vlc-time">0:00</span>
+            <span id="vlc-total">0:00</span>
+        </div>
+        <input type="range" id="scrubber" min="0" max="100" value="0" step="0.1">
     </div>
 
     <div id="countdown-box" class="hidden">
-        <div id="timer-msg" style="letter-spacing: 5px;">RECORDING</div>
+        <div id="timer-msg" style="letter-spacing:5px">RECORDING</div>
         <div id="timer-val">3</div>
     </div>
 
@@ -93,21 +80,23 @@
 
 <script>
 let synth, recording = [], library = [], isLive = false, currentMode = 'PERFORM';
-let rFistStart = 0, lFistStart = 0, bothFistStart = 0, bothOpenStart = 0, startTime = 0;
+let rFistTime = 0, lFistTime = 0, bothFistTime = 0, bothOpenTime = 0, startTime = 0;
 const notes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-let fingerVols = Array(10).fill(-6), fingerNotes = [...notes.slice(0,10)];
-let fingerStates = {}, ripples = [];
+let ripples = [], fingerStates = {}, activeVLC = null;
 
 const video = document.getElementById('input_video');
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 
-// --- APP ROUTING ---
-async function launchPerformance() {
-    if(!synth) { await Tone.start(); synth = new Tone.PolySynth(Tone.Synth).toDestination(); }
+async function launchStage() {
+    if(!synth) { 
+        await Tone.start(); 
+        synth = new Tone.PolySynth(Tone.Synth, { 
+            envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 } 
+        }).toDestination(); 
+    }
     document.getElementById('menu-main').classList.add('hidden');
     document.getElementById('hud-top').classList.remove('hidden');
-    document.getElementById('side-dash').classList.remove('hidden');
     isLive = true;
     startCamera();
 }
@@ -118,141 +107,104 @@ function showPane(pane) {
     if(pane === 'library') renderLibrary();
 }
 
-function backToMenu() {
-    isLive = false;
-    document.getElementById('hud-top').classList.add('hidden');
-    document.getElementById('side-dash').classList.add('hidden');
-    document.getElementById('menu-main').classList.remove('hidden');
-}
+function exitToMenu() { isLive = false; showPane('main'); document.getElementById('hud-top').classList.add('hidden'); }
 
-// --- MIXER GENERATOR ---
-const mixer = document.getElementById('mixer-content');
-['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((name, i) => {
-    mixer.innerHTML += `<div class="row">
-        <span>${name}</span>
-        <input type="range" min="-30" max="0" value="-6" onchange="fingerVols[${i}]=this.value">
-        <select onchange="fingerNotes[${i}]=this.value">${notes.map(n=>`<option ${n==notes[i]?'selected':''}>${n}</option>`).join('')}</select>
-        <button class="btn" style="padding:5px 10px" onclick="testNote(${i})">TEST</button>
-    </div>`;
-});
-
-function testNote(i) {
-    synth.triggerAttackRelease(fingerNotes[i], "8n", undefined, Tone.dbToGain(fingerVols[i]));
-}
-
-// --- PHYSICS & LOGIC ---
+// --- GESTURES ---
 function isClenched(lm) {
     const d = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y);
-    return d < 0.14;
+    return d < 0.13;
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Wave Interference Animation
+
+    // Ripple & Key Animation
     ripples.forEach((r, i) => {
-        r.rad += 3.5; r.alpha -= 0.015;
-        ctx.strokeStyle = `hsla(${r.hue}, 80%, 60%, ${r.alpha})`;
-        ctx.lineWidth = 3;
+        r.rad += 5; r.alpha -= 0.02;
+        ctx.strokeStyle = `rgba(0, 242, 255, ${r.alpha})`;
         ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
-        
-        ripples.forEach((other, j) => {
-            if(i !== j) {
-                const dist = Math.hypot(r.x - other.x, r.y - other.y);
-                if(dist < r.rad + other.rad) { // Young's Interference Point
-                    ctx.fillStyle = `rgba(255,255,255,${r.alpha})`;
-                    ctx.beginPath(); ctx.arc((r.x+other.x)/2, (r.y+other.y)/2, 4, 0, Math.PI*2); ctx.fill();
-                }
-            }
-        });
+        ctx.fillStyle = `rgba(0, 242, 255, ${r.alpha})`;
+        ctx.font = "bold 40px Arial";
+        ctx.fillText(r.note, r.x - 20, r.y - r.rad - 10);
         if(r.alpha <= 0) ripples.splice(i, 1);
     });
 
-    let rf = false, lf = false, bo = false, bf = false, liveHTML = "";
-
+    let rf = false, lf = false, bo = false, bf = false;
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label === "Left" ? "Right" : "Left";
             const clench = isClenched(lm);
             const open = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) > 0.45;
-            if(clench) { if(side === "Right") rf = true; else lf = true; }
+            if(clench) side === "Right" ? rf = true : lf = true;
             if(open) bo = true;
 
-            [4, 8, 12, 16, 20].forEach((id, fIdx) => {
-                const tip = lm[id];
-                const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
-                const isBent = tip.y > lm[id-1].y;
-                
-                if(isBent && !clench) {
-                    const noteIdx = Math.floor((1-tip.x) * (notes.length-1));
-                    const note = notes[noteIdx];
-                    liveHTML += `<div style="color:var(--neon)">${side} Finger -> ${note}</div>`;
-                    
-                    if(!fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                        synth.triggerAttackRelease(note, "4n", undefined, Tone.dbToGain(fingerVols[fIdx + (side==='Right'?5:0)]));
-                        ripples.push({x, y, rad: 5, alpha: 1.0, hue: noteIdx*20});
-                        if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
+            if(!clench) {
+                [4, 8, 12, 16, 20].forEach(id => {
+                    const tip = lm[id];
+                    const isBent = tip.y > lm[id-1].y;
+                    if(isBent && !fingerStates[`${side}_${id}`]) {
+                        const noteIdx = Math.floor((1-tip.x)*(notes.length-1));
+                        const note = notes[noteIdx];
+                        if(currentMode === 'PERFORM' || currentMode === 'RECORDING') {
+                            synth.triggerAttackRelease(note, "4n");
+                            ripples.push({x: (1-tip.x)*canvas.width, y: tip.y*canvas.height, rad: 5, alpha: 1, note});
+                            if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
+                        }
                         fingerStates[`${side}_${id}`] = true;
-                    }
-                } else { fingerStates[`${side}_${id}`] = false; }
-                ctx.fillStyle = isBent ? "var(--play)" : "white";
-                ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
-            });
+                    } else if(!isBent) fingerStates[`${side}_${id}`] = false;
+                });
+            }
         });
         if(rf && lf) bf = true;
     }
-    document.getElementById('live-notes').innerHTML = liveHTML || "Ready...";
 
-    // --- STATE MACHINE ---
+    // STATE MACHINE COUNTDOWNS
     const now = Date.now(), box = document.getElementById('countdown-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg');
-
     if(rf && !lf) {
-        if(!rFistStart) rFistStart = now;
-        let elap = Math.floor((now-rFistStart)/1000);
-        box.classList.remove('hidden'); val.innerText = 3-elap; val.style.color = "var(--rec)";
-        msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
-        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING'){recording=[]; startTime=now;} rFistStart=now+5000; box.classList.add('hidden'); }
-    } else if(lf && !rf && currentMode==='STOP') {
-        if(!lFistStart) lFistStart = now;
-        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistStart)/1000);
-        msg.innerText = "PLAYING"; val.style.color = "var(--play)";
-        if(now-lFistStart >= 3000) { currentMode='PLAY'; box.classList.add('hidden'); recording.forEach(e=>setTimeout(()=>synth.triggerAttackRelease(e.note,"4n"), e.time)); setTimeout(()=>currentMode='STOP', (recording[recording.length-1]?.time||0)+1000); lFistStart=now+5000; }
-    } else if(bf && currentMode==='STOP') {
-        if(!bothFistStart) bothFistStart = now;
-        box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothFistStart)/1000);
-        msg.innerText = "NEW SESSION"; val.style.color = "var(--new)";
-        if(now-bothFistStart >= 5000) { recording=[]; currentMode='PERFORM'; bothFistStart=now+5000; }
-    } else if(results.multiHandLandmarks?.length === 2 && bo && currentMode==='STOP') {
-        if(!bothOpenStart) bothOpenStart = now;
-        box.classList.remove('hidden'); val.innerText = 7-Math.floor((now-bothOpenStart)/1000);
-        msg.innerText = "SAVING"; val.style.color = "var(--neon)";
-        if(now-bothOpenStart >= 7000) { library.push({name: "Tune_"+Date.now(), data: [...recording]}); bothOpenStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
-    } else { rFistStart = lFistStart = bothFistStart = bothOpenStart = 0; box.classList.add('hidden'); }
+        if(!rFistTime) rFistTime = now;
+        let elap = Math.floor((now-rFistTime)/1000);
+        box.classList.remove('hidden'); val.innerText = 3-elap; msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
+        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING'){recording=[]; startTime=now;} rFistTime=now+5000; box.classList.add('hidden'); }
+    } else if(lf && !rf && currentMode === 'STOP') {
+        if(!lFistTime) lFistTime = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistTime)/1000); msg.innerText = "PLAYING";
+        if(now-lFistTime >= 3000) { playSession(recording); lFistTime=now+5000; box.classList.add('hidden'); }
+    } else if(results.multiHandLandmarks?.length === 2 && bo && currentMode === 'STOP') {
+        if(!bothOpenTime) bothOpenTime = now;
+        let elap = Math.floor((now-bothOpenTime)/1000);
+        box.classList.remove('hidden');
+        if(elap < 4) { val.innerText = 7-elap; msg.innerText = "PREPARING SAVE"; }
+        else { val.innerText = 3-(elap-4); msg.innerText = "SAVING"; val.style.color = "var(--new)"; }
+        if(elap >= 7) { library.push({data: [...recording], duration: recording[recording.length-1]?.time || 0}); bothOpenTime=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
+    } else { rFistTime = lFistTime = bothOpenTime = 0; box.classList.add('hidden'); }
     document.getElementById('mode-pill').innerText = currentMode;
     ctx.restore();
 }
 
-function renderLibrary() {
-    const container = document.getElementById('library-content');
-    if(library.length === 0) { container.innerHTML = "<h3>SAVED RECORDINGS</h3><p>Empty.</p>"; return; }
-    container.innerHTML = "<h3>SAVED RECORDINGS</h3>" + library.map((t, i) => `
-        <div class="row">
-            <span>${t.name}</span>
-            <button class="btn" style="padding:5px 10px" onclick="playLib(${i})">PLAY VLC</button>
-            <button class="btn" style="padding:5px 10px; border-color:#fff; color:#fff" onclick="shareLib()">SHARE</button>
-        </div>
-    `).join('');
+function playSession(data) {
+    currentMode = 'PLAYING';
+    document.getElementById('vlc-bar').classList.remove('hidden');
+    const total = data[data.length-1]?.time || 0;
+    data.forEach(e => {
+        setTimeout(() => {
+            synth.triggerAttackRelease(e.note, "4n");
+            document.getElementById('scrubber').value = (e.time/total)*100;
+        }, e.time);
+    });
+    setTimeout(() => { currentMode = 'STOP'; document.getElementById('vlc-bar').classList.add('hidden'); }, total + 1000);
 }
 
-function playLib(i) { library[i].data.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time)); }
-function shareLib() { navigator.clipboard.writeText(window.location.href); alert("App Link Copied! Share this with your friends."); }
+function renderLibrary() {
+    const cont = document.getElementById('lib-content');
+    cont.innerHTML = library.length ? library.map((t, i) => `<div class="btn" onclick="playSession(library[${i}].data)">TUNE ${i+1} - PLAY</div>`).join('') : "No tunes.";
+}
 
-const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-handTracker.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
-handTracker.onResults(onResults);
-function startCamera() { new Camera(video, { onFrame: async () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; await handTracker.send({image: video}); }, width: 1280, height: 720 }).start(); }
+const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
+hands.onResults(onResults);
+function startCamera() { new Camera(video, { onFrame: async () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; await hands.send({image: video}); }, width: 1280, height: 720 }).start(); }
 </script>
 </body>
 </html>
