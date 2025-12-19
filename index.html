@@ -3,105 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro - Strict Control</title>
+    <title>Air Piano - Gesture Master</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
 
     <style>
-        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --gold: #ffd700; }
-        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: sans-serif; }
         canvas { width: 100vw; height: 100vh; }
         
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 100; text-align: center; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); z-index: 200; }
         .hidden { display: none !important; }
         
-        #gui { position: absolute; top: 30px; width: 100%; display: flex; justify-content: center; gap: 50px; pointer-events: none; }
-        .status-pill { padding: 10px 25px; border: 2px solid #333; border-radius: 50px; font-weight: bold; font-size: 1.1rem; text-transform: uppercase; background: rgba(0,0,0,0.5); }
-        .active-rec { border-color: var(--rec); color: var(--rec); box-shadow: 0 0 15px var(--rec); }
-        .active-play { border-color: var(--play); color: var(--play); box-shadow: 0 0 15px var(--play); }
+        #timer-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; font-weight: bold; color: var(--play); pointer-events: none; text-shadow: 0 0 30px var(--play); z-index: 150; }
         
-        button { padding: 20px 50px; background: var(--neon); border: none; border-radius: 10px; cursor: pointer; font-size: 1.5rem; font-weight: bold; }
+        #gui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: center; gap: 20px; z-index: 100; }
+        .pill { padding: 10px 20px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid #444; font-weight: bold; }
+        .rec-active { background: var(--rec); color: white; border: none; box-shadow: 0 0 15px var(--rec); }
+        .play-active { background: var(--play); color: black; border: none; box-shadow: 0 0 15px var(--play); }
+
+        button { padding: 20px 40px; font-size: 1.5rem; background: var(--neon); border: none; border-radius: 50px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="welcome" class="overlay">
-        <h1 style="color: var(--neon); letter-spacing: 5px;">AIR PIANO PRO</h1>
-        <p>Right Fist: REC/STOP | Left Fist: PLAY | Both: NEW SESSION</p>
-        <button onclick="initApp()">INITIALIZE SYSTEM</button>
+        <h1>GESTURE PIANO PRO</h1>
+        <p>Hold Right Fist (3s): REC/STOP | Hold Left Fist (3s): PLAY | Both (5s): NEW</p>
+        <button onclick="initApp()">START ENGINE</button>
     </div>
 
+    <div id="timer-ui"></div>
+
     <div id="gui">
-        <div id="rec-status" class="status-pill">REC: IDLE</div>
-        <div id="play-status" class="status-pill">LOOP: READY</div>
+        <div id="status-rec" class="pill">REC: OFF</div>
+        <div id="status-play" class="pill">LOOP: IDLE</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], isRecording = false, isPlaying = false, loopStartTime = 0;
-let lastRightFistTime = 0, lastLeftFistTime = 0;
+let synth, recording = [], isRecording = false, isPlaying = false, startTime = 0;
+let rClenchStart = 0, lClenchStart = 0, bothClenchStart = 0;
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
+const timerUI = document.getElementById('timer-ui');
 
-const pianoNotes = ['C3', 'D3', 'E3', 'F3', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5'];
+// Extended Polyphonic Notes
+const pianoNotes = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
 let fingerStates = {};
-let drops = [];
 
 async function initApp() {
     await Tone.start();
-    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    // Optimized PolySynth for multi-note collisions
+    synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 1.2 }
+    }).toDestination();
     document.getElementById('welcome').classList.add('hidden');
     startCamera();
 }
 
-// Strict Fist Detection: Measures average closure of all 4 fingers (excluding thumb)
 function isStrictFist(landmarks) {
     const wrist = landmarks[0];
-    const tips = [8, 12, 16, 20]; // Index, Middle, Ring, Pinky
+    const tips = [8, 12, 16, 20];
     let avgDist = 0;
-    tips.forEach(id => {
-        avgDist += Math.hypot(landmarks[id].x - wrist.x, landmarks[id].y - wrist.y);
-    });
-    return (avgDist / 4) < 0.12; // Very small distance means fully clenched
+    tips.forEach(id => avgDist += Math.hypot(landmarks[id].x - wrist.x, landmarks[id].y - wrist.y));
+    return (avgDist / 4) < 0.12;
 }
 
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    // Visual Drops
-    drops.forEach((d, i) => {
-        d.y += 6; d.alpha -= 0.02;
-        canvasCtx.fillStyle = `rgba(0, 242, 255, ${d.alpha})`;
-        canvasCtx.font = "bold 24px monospace";
-        canvasCtx.fillText(d.note, d.x, d.y);
-        if (d.alpha <= 0) drops.splice(i, 1);
-    });
+    let rFist = false, lFist = false;
 
-    if (results.multiHandLandmarks && results.multiHandedness) {
-        let rFist = false, lFist = false;
-
+    if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((landmarks, hIdx) => {
             let side = results.multiHandedness[hIdx].label === "Left" ? "Right" : "Left";
-            let clenched = isStrictFist(landmarks);
+            let fist = isStrictFist(landmarks);
+            if (fist) { if(side === "Right") rFist = true; if(side === "Left") lFist = true; }
 
-            if (clenched) {
-                if (side === "Right") rFist = true;
-                if (side === "Left") lFist = true;
-            }
-
-            // Piano Play Logic (Only if hand is NOT a fist)
-            if (!clenched) {
-                [4, 8, 12, 16, 20].forEach((id, fIdx) => {
+            // PIANO PLAYING (Only if not a fist)
+            if (!fist) {
+                [4, 8, 12, 16, 20].forEach(id => {
                     const tip = landmarks[id];
                     const x = (1 - tip.x) * canvasElement.width;
                     const y = tip.y * canvasElement.height;
-                    
                     const isBent = tip.y > landmarks[id-1].y;
                     const key = `${side}_${id}`;
 
@@ -109,72 +101,66 @@ function onResults(results) {
                         const noteIdx = Math.floor((1 - tip.x) * (pianoNotes.length - 1));
                         const note = pianoNotes[noteIdx];
                         synth.triggerAttackRelease(note, "4n");
-                        drops.push({ x, y, note, alpha: 1.0 });
-
-                        if (isRecording) {
-                            recording.push({ note, time: Date.now() - loopStartTime });
-                        }
+                        
+                        if (isRecording) recording.push({ note, time: Date.now() - startTime });
                         fingerStates[key] = true;
-                    } else if (!isBent) {
-                        fingerStates[key] = false;
-                    }
+                    } else if (!isBent) { fingerStates[key] = false; }
 
-                    // Finger marker
-                    canvasCtx.fillStyle = isBent ? "var(--gold)" : "white";
-                    canvasCtx.beginPath();
-                    canvasCtx.arc(x, y, 10, 0, Math.PI*2);
-                    canvasCtx.fill();
-                    canvasCtx.font = "12px Arial";
-                    canvasCtx.fillText(side, x - 15, y - 20);
+                    canvasCtx.fillStyle = isBent ? "#ffd700" : "white";
+                    canvasCtx.beginPath(); canvasCtx.arc(x, y, 10, 0, Math.PI*2); canvasCtx.fill();
                 });
             }
         });
 
-        // --- GESTURE SYSTEM ---
         const now = Date.now();
-        const recUI = document.getElementById('rec-status');
-        const playUI = document.getElementById('play-status');
-
-        // NEW SESSION: Both fists
+        // --- COUNTDOWN GESTURE LOGIC ---
+        
+        // BOTH HANDS: NEW SESSION (5s)
         if (rFist && lFist) {
-            recording = [];
-            isRecording = false;
-            recUI.innerText = "NEW SESSION";
-            recUI.className = "status-pill";
-            return;
-        }
-
-        // RIGHT FIST: REC/STOP Toggle
-        if (rFist && (now - lastRightFistTime > 1000)) {
-            isRecording = !isRecording;
-            if (isRecording) {
-                recording = []; loopStartTime = Date.now();
-                recUI.innerText = "RECORDING";
-                recUI.className = "status-pill active-rec";
-            } else {
-                recUI.innerText = "STOPPED";
-                recUI.className = "status-pill";
+            if (!bothClenchStart) bothClenchStart = now;
+            let elapsed = Math.floor((now - bothClenchStart) / 1000);
+            timerUI.innerText = 5 - elapsed;
+            if (elapsed >= 5) {
+                recording = []; isRecording = false; 
+                timerUI.innerText = "NEW"; setTimeout(()=>timerUI.innerText="", 1000);
+                document.getElementById('status-rec').className = "pill";
             }
-            lastRightFistTime = now;
+        } 
+        // RIGHT HAND: REC/STOP (3s)
+        else if (rFist) {
+            if (!rClenchStart) rClenchStart = now;
+            let elapsed = Math.floor((now - rClenchStart) / 1000);
+            timerUI.innerText = 3 - elapsed;
+            timerUI.style.color = "var(--rec)";
+            if (elapsed >= 3) {
+                isRecording = !isRecording;
+                if (isRecording) { recording = []; startTime = now; }
+                document.getElementById('status-rec').className = isRecording ? "pill rec-active" : "pill";
+                document.getElementById('status-rec').innerText = isRecording ? "RECORDING" : "STOPPED";
+                rClenchStart = now + 5000; // Cooldown
+                timerUI.innerText = isRecording ? "START" : "STOP";
+            }
         }
-
-        // LEFT FIST: PLAY
-        if (lFist && recording.length > 0 && !isPlaying && (now - lastLeftFistTime > 1000)) {
-            isPlaying = true;
-            playUI.innerText = "PLAYING";
-            playUI.className = "status-pill active-play";
-            
-            recording.forEach(event => {
-                setTimeout(() => synth.triggerAttackRelease(event.note, "4n"), event.time);
-            });
-
-            const totalTime = recording[recording.length - 1].time + 1000;
-            setTimeout(() => {
-                isPlaying = false;
-                playUI.innerText = "LOOP: READY";
-                playUI.className = "status-pill";
-            }, totalTime);
-            lastLeftFistTime = now;
+        // LEFT HAND: PLAY (3s)
+        else if (lFist) {
+            if (!lClenchStart) lClenchStart = now;
+            let elapsed = Math.floor((now - lClenchStart) / 1000);
+            timerUI.innerText = 3 - elapsed;
+            timerUI.style.color = "var(--play)";
+            if (elapsed >= 3 && recording.length > 0 && !isPlaying) {
+                isPlaying = true;
+                document.getElementById('status-play').className = "pill play-active";
+                recording.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time));
+                setTimeout(() => { 
+                    isPlaying = false; 
+                    document.getElementById('status-play').className = "pill";
+                }, recording[recording.length-1].time + 1000);
+                lClenchStart = now + 5000;
+                timerUI.innerText = "PLAY";
+            }
+        } else {
+            rClenchStart = 0; lClenchStart = 0; bothClenchStart = 0;
+            timerUI.innerText = "";
         }
     }
     canvasCtx.restore();
