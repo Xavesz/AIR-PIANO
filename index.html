@@ -3,161 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Air Instrument - Pro</title>
+    <title>3D Air Piano - Loop Station</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
 
     <style>
-        :root { --neon: #00f2ff; --pink: #ff0055; }
-        body { margin: 0; background: #050505; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        :root { --neon: #00f2ff; --gold: #ffd700; --red: #ff4d4d; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         canvas { width: 100vw; height: 100vh; transform: scaleX(-1); }
-        
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); z-index: 100; transition: 0.5s; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 100; }
         .hidden { display: none !important; }
-        
-        .mode-select { display: flex; gap: 20px; }
-        button { padding: 15px 30px; font-size: 1rem; background: transparent; color: var(--neon); border: 2px solid var(--neon); border-radius: 5px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        button:hover { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
-
-        #hud { position: absolute; bottom: 20px; left: 20px; width: 240px; height: 160px; border: 2px solid #333; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; padding: 10px; font-size: 12px; }
-        .log-box { flex-grow: 1; overflow: hidden; color: #888; }
+        button { padding: 25px 50px; font-size: 1.5rem; background: var(--neon); border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        #status { position: absolute; top: 20px; width: 100%; text-align: center; color: var(--neon); letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="welcome" class="overlay">
-        <h1 style="letter-spacing: 5px;">AIR STUDIO PRO</h1>
-        <div class="mode-select">
-            <button onclick="initApp('piano')">PIANO MODE</button>
-            <button onclick="initApp('drum')">DRUM MODE</button>
-        </div>
+        <h1>AIR PIANO PRO</h1>
+        <p>👌 Right hand OK: Record Loop | 👌 Left hand OK: Play Loop</p>
+        <button id="startBtn">START SYSTEM</button>
     </div>
 
-    <div id="hud">
-        <div style="color: var(--neon); border-bottom: 1px solid #333; margin-bottom: 5px;">SENSORS & DIAGNOSTICS</div>
-        <div id="handInfo">Left: -- | Right: --</div>
-        <div id="log" class="log-box"></div>
-    </div>
-
+    <div id="status">MIRROR MODE: ACTIVE</div>
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, sampler, currentMode;
-let audioStarted = false;
+let synth, recording = [], isRecording = false, loopStartTime = 0;
 const videoElement = document.getElementById('input_video');
 const canvasElement = document.getElementById('output_canvas');
 const canvasCtx = canvasElement.getContext('2d');
-const logBox = document.getElementById('log');
-
 const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
-const drumNotes = ["C1", "D1", "E1", "F1"]; // Kick, Snare, Hi-Hat, Crash
-let fingerStates = {}; // Tracking per-finger states
-let drops = []; // Raindrop tiles
+let fingerStates = {};
+let drops = [];
 
-async function initApp(mode) {
-    currentMode = mode;
+document.getElementById('startBtn').onclick = async () => {
     await Tone.start();
-    
-    // Drum sounds (Simple placeholders, better to use samples)
-    if (mode === 'drum') {
-        synth = new Tone.MembraneSynth().toDestination();
-    } else {
-        synth = new Tone.PolySynth(Tone.Synth).toDestination();
-    }
-
+    // Refined High-Quality Piano Synth
+    synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "fatsine4" },
+        envelope: { attack: 0.1, decay: 0.3, sustain: 0.4, release: 2 }
+    }).toDestination();
     document.getElementById('welcome').classList.add('hidden');
-    audioStarted = true;
     startCamera();
-}
+};
 
-// Advanced Bend Detection (Horizontal + Vertical)
-function isFingerBent(landmarks, tipIdx) {
-    const wrist = landmarks[0];
-    const pip = landmarks[tipIdx - 2]; // Joint
-    const tip = landmarks[tipIdx];
-    
-    // Thumb logic is different (Horizontal bend)
-    if (tipIdx === 4) {
-        return Math.hypot(tip.x - landmarks[17].x, tip.y - landmarks[17].y) < 0.15;
-    }
-    
-    // Vertical logic for others
-    return tip.y > pip.y;
+function isOkaySign(landmarks) {
+    const thumb = landmarks[4];
+    const index = landmarks[8];
+    const dist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+    return dist < 0.05; // Very close together
 }
 
 function spawnDrop(x, y, note) {
-    drops.push({ x, y, speed: 5, note, alpha: 1.0 });
+    drops.push({ x, y, note, alpha: 1.0, ySpeed: 4 });
 }
 
 function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    // Draw Falling Raindrops
+    // Render Drops
     drops.forEach((d, i) => {
-        d.y += d.speed;
-        d.alpha -= 0.02;
+        d.y += d.ySpeed; d.alpha -= 0.015;
         canvasCtx.fillStyle = `rgba(0, 242, 255, ${d.alpha})`;
-        canvasCtx.beginPath();
-        canvasCtx.arc(d.x, d.y, 10, 0, Math.PI * 2);
-        canvasCtx.fill();
+        canvasCtx.font = "bold 20px sans-serif";
+        canvasCtx.fillText(d.note, d.x, d.y);
         if (d.alpha <= 0) drops.splice(i, 1);
     });
 
     if (results.multiHandLandmarks && results.multiHandedness) {
         results.multiHandLandmarks.forEach((landmarks, hIdx) => {
-            const side = results.multiHandedness[hIdx].label; // "Left" or "Right"
+            // FIX INVERSION: Swap Left/Right labels
+            let side = results.multiHandedness[hIdx].label === "Left" ? "Right" : "Left";
+            
+            // Check for OKAY GESTURE
+            if (isOkaySign(landmarks)) {
+                if (side === "Right" && !isRecording) {
+                    isRecording = true; recording = []; loopStartTime = Date.now();
+                    document.getElementById('status').innerText = "🔴 RECORDING LOOP...";
+                }
+                if (side === "Left" && recording.length > 0) {
+                    playLoop();
+                }
+            }
+
             const tips = [4, 8, 12, 16, 20];
             const names = ["Thumb", "Index", "Middle", "Ring", "Pinky"];
 
             tips.forEach((id, fIdx) => {
-                // If Drum mode, only use Index(8) and Middle(12)
-                if (currentMode === 'drum' && id !== 8 && id !== 12) return;
+                const tip = landmarks[id];
+                const x = (1 - tip.x) * canvasElement.width;
+                const y = tip.y * canvasElement.height;
+                
+                // Bend Detection
+                const isBent = tip.y > landmarks[id-2].y;
+                const key = `${side}_${names[fIdx]}`;
 
-                const bent = isFingerBent(landmarks, id);
-                const fingerKey = `${side}_${names[fIdx]}`;
-                const x = (1 - landmarks[id].x) * canvasElement.width;
-                const y = landmarks[id].y * canvasElement.height;
-
-                if (bent && !fingerStates[fingerKey]) {
-                    const lane = Math.floor(landmarks[id].x * notes.length);
-                    const note = currentMode === 'piano' ? notes[lane] : drumNotes[fIdx % 4];
-                    
-                    synth.triggerAttackRelease(note, "8n");
+                if (isBent && !fingerStates[key]) {
+                    const lane = Math.floor(tip.x * notes.length);
+                    const note = notes[lane];
+                    synth.triggerAttackRelease(note, "4n");
                     spawnDrop(x, y, note);
                     
-                    // Add Log
-                    logBox.innerHTML = `> ${side} ${names[fIdx]} played ${note}<br>` + logBox.innerHTML;
-                    fingerStates[fingerKey] = true;
-
-                    // Vibration Glow
-                    canvasCtx.shadowBlur = 40;
-                    canvasCtx.shadowColor = "var(--pink)";
-                } else if (!bent) {
-                    fingerStates[fingerKey] = false;
+                    if (isRecording) {
+                        recording.push({ note, time: Date.now() - loopStartTime });
+                    }
+                    
+                    fingerStates[key] = true;
+                } else if (!isBent) {
+                    fingerStates[key] = false;
                 }
 
-                // Draw Finger Points
-                canvasCtx.fillStyle = bent ? "var(--pink)" : "var(--neon)";
+                // Visual Glow
+                canvasCtx.fillStyle = isBent ? "var(--gold)" : "white";
                 canvasCtx.beginPath();
-                canvasCtx.arc(x, y, 12, 0, Math.PI * 2);
+                canvasCtx.arc(x, y, 10, 0, Math.PI*2);
                 canvasCtx.fill();
-                
-                // Label above finger
-                canvasCtx.fillStyle = "white";
-                canvasCtx.font = "12px monospace";
-                canvasCtx.fillText(`${side} ${names[fIdx]}`, x - 20, y - 20);
+                canvasCtx.fillText(`${side} ${names[fIdx]}`, x - 30, y - 20);
             });
         });
     }
     canvasCtx.restore();
 }
 
+function playLoop() {
+    document.getElementById('status').innerText = "🟢 PLAYING LOOP...";
+    recording.forEach(event => {
+        setTimeout(() => synth.triggerAttackRelease(event.note, "4n"), event.time);
+    });
+}
+
 const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.75 });
+hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
 hands.onResults(onResults);
 
 function startCamera() {
