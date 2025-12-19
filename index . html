@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D AI Air Piano</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body { margin: 0; background: #111; color: white; overflow: hidden; font-family: sans-serif; }
+        canvas { width: 100vw; height: 100vh; transform: scaleX(-1); }
+        .ui { position: absolute; top: 20px; width: 100%; text-align: center; pointer-events: none; }
+        #btn { pointer-events: auto; padding: 15px 30px; font-size: 20px; background: #00ff88; border: none; border-radius: 50px; cursor: pointer; }
+        .info { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>AIR PIANO 3D</h1>
+        <button id="btn">START SENSORS & AUDIO</button>
+    </div>
+    <div class="info">AI Finger Tracking: Active | Mode: 3D Depth</div>
+    <canvas id="output_canvas"></canvas>
+    <video id="input_video" style="display:none"></video>
+
+<script>
+const videoElement = document.getElementById('input_video');
+const canvasElement = document.getElementById('output_canvas');
+const canvasCtx = canvasElement.getContext('2d');
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'];
+let tiles = []; // For the falling song tiles
+
+document.getElementById('btn').onclick = () => {
+    Tone.start();
+    document.querySelector('.ui').style.display = 'none';
+    setInterval(spawnTile, 1500); // Start falling tiles
+};
+
+function spawnTile() {
+    const lane = Math.floor(Math.random() * notes.length);
+    tiles.push({ lane: lane, y: -50 });
+}
+
+function onResults(results) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    
+    // Draw Piano Lanes
+    const w = canvasElement.width / notes.length;
+    notes.forEach((n, i) => {
+        canvasCtx.strokeStyle = "rgba(255,255,255,0.1)";
+        canvasCtx.strokeRect(i * w, 0, w, canvasElement.height);
+    });
+
+    // Draw & Move Falling Tiles
+    canvasCtx.fillStyle = "#00ff88";
+    tiles.forEach((tile, index) => {
+        tile.y += 5; // Gravity speed
+        canvasCtx.fillRect(tile.lane * w + 5, tile.y, w - 10, 40);
+        if (tile.y > canvasElement.height) tiles.splice(index, 1);
+    });
+
+    if (results.multiHandLandmarks) {
+        for (const landmarks of results.multiHandLandmarks) {
+            // Track all 5 finger tips (8, 12, 16, 20, 4)
+            [4, 8, 12, 16, 20].forEach(id => {
+                const tip = landmarks[id];
+                const x = tip.x * canvasElement.width;
+                const y = tip.y * canvasElement.height;
+                const depth = tip.z; // "Face ID" style depth estimation
+
+                // Trigger: Finger is at the bottom (y > 0.7) AND "pressed" (depth < -0.1)
+                if (tip.y > 0.7 && depth < -0.12) {
+                    const lane = Math.floor(tip.x * notes.length);
+                    // Check if hit a tile
+                    tiles.forEach((t, i) => {
+                        if (t.lane === lane && Math.abs(t.y - y) < 50) {
+                            synth.triggerAttackRelease(notes[lane], "8n");
+                            tiles.splice(i, 1); // Remove tile on hit
+                            canvasCtx.fillStyle = "white";
+                            canvasCtx.fillRect(lane*w, 0, w, canvasElement.height);
+                        }
+                    });
+                }
+                
+                // Draw Finger Shadows
+                canvasCtx.fillStyle = depth < -0.12 ? "red" : "cyan";
+                canvasCtx.beginPath();
+                canvasCtx.arc(x, y, 15, 0, 2 * Math.PI);
+                canvasCtx.fill();
+            });
+        }
+    }
+    canvasCtx.restore();
+}
+
+const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+hands.onResults(onResults);
+
+const camera = new Camera(videoElement, {
+    onFrame: async () => {
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+        await hands.send({image: videoElement});
+    },
+    width: 640, height: 480
+});
+camera.start();
+</script>
+</body>
+</html>
