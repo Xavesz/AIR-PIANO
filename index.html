@@ -3,84 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro | Launch Ready</title>
+    <title>Air Piano Pro | Ultimate Professional Edition</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --stop: #ffa500; --gold: #ffd700; }
         body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { width: 100vw; height: 100vh; position: absolute; }
+        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
         
-        /* Menu System */
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); z-index: 1000; text-align: center; }
+        /* GUI Layers */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.92); z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
-        .btn { padding: 15px 40px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 5px; font-weight: bold; margin: 10px; transition: 0.3s; }
+        .btn { padding: 12px 35px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 8px; transition: 0.3s; z-index: 1100; }
         .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
-        
-        /* HUD & Stats */
-        #dashboard { position: absolute; top: 20px; left: 20px; border-left: 4px solid var(--neon); padding: 10px; background: rgba(255,255,255,0.05); z-index: 500; }
-        #mode-indicator { position: absolute; top: 20px; right: 20px; padding: 10px 20px; border-radius: 5px; font-weight: bold; border: 1px solid var(--neon); z-index: 500; }
 
-        /* Timer/Countdown */
+        /* HUD & Notifications */
+        #nav-header { position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 500; pointer-events: none; }
+        .hud-pill { padding: 8px 15px; background: rgba(255,255,255,0.1); border: 1px solid #444; border-radius: 5px; font-size: 0.8rem; pointer-events: auto; }
+        
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 800; pointer-events: none; text-align: center; }
-        #timer-val { font-size: 9rem; font-weight: bold; }
+        #timer-val { font-size: 8rem; font-weight: bold; font-family: monospace; }
         #timer-msg { font-size: 1.5rem; letter-spacing: 5px; text-transform: uppercase; }
 
-        /* Mixer & Player */
-        .scroll-pane { background: #111; padding: 30px; border-radius: 10px; width: 80%; max-height: 70%; overflow-y: auto; border: 1px solid #333; }
-        .slider-row { display: flex; align-items: center; gap: 20px; margin: 15px 0; }
+        .settings-pane { background: #111; padding: 30px; border-radius: 10px; width: 85%; max-height: 75%; overflow-y: auto; border: 1px solid #333; }
+        .slider-row { display: flex; align-items: center; gap: 15px; margin: 12px 0; }
         input[type=range] { flex-grow: 1; accent-color: var(--neon); }
     </style>
 </head>
 <body>
 
     <div id="ui-main" class="overlay">
-        <h1 style="font-size: 3rem; color: var(--neon);">AIR PIANO PRO</h1>
-        <button class="btn" onclick="showScene('how-to')">How To Use</button>
-        <button class="btn" onclick="showScene('settings')">Mixer & Settings</button>
-        <button class="btn" onclick="showScene('library')">Saved Tunes</button>
-        <button class="btn" onclick="enterPlay()">🚀 START PERFORMANCE</button>
-    </div>
-
-    <div id="ui-how-to" class="overlay hidden">
-        <div class="scroll-pane">
-            <h2>MANUAL</h2>
-            <p>1. <b>Right Fist (3s):</b> Record / Stop</p>
-            <p>2. <b>Left Fist (3s):</b> Play Recorded Loop</p>
-            <p>3. <b>Both Fists (5s):</b> Reset / New Session</p>
-            <p>4. <b>Prayer Pose (3s):</b> Save to Library</p>
-            <button class="btn" onclick="showScene('main')">BACK TO MENU</button>
-        </div>
+        <h1 style="font-size: 3.5rem; color: var(--neon); margin: 0;">AIR PIANO <span style="color:white; font-weight: 300;">ULTIMATE</span></h1>
+        <p style="color:#777; margin-bottom: 30px;">PRO-GRADE VIRTUAL INSTRUMENT</p>
+        <button class="btn" onclick="initPerformance()">LAUNCH STAGE</button>
+        <button class="btn" onclick="showPane('settings')">MIXER & KEYS</button>
+        <button class="btn" onclick="showPane('library')">SAVED TUNES</button>
     </div>
 
     <div id="ui-settings" class="overlay hidden">
-        <div class="scroll-pane">
-            <h3>AUDIO MIXER</h3>
+        <div class="settings-pane">
+            <h3>FINGER AUDIO MIXER</h3>
             <div id="mixer-container"></div>
             <hr>
-            <label><input type="checkbox" id="invert-left"> INVERT LEFT HAND MAPPING</label>
+            <h3>KEY ASSIGNMENT</h3>
+            <div id="key-assign-container"></div>
         </div>
-        <button class="btn" onclick="showScene('main')">SAVE & EXIT</button>
+        <button class="btn" onclick="showPane('main')">SAVE & BACK</button>
     </div>
 
     <div id="ui-library" class="overlay hidden">
-        <div class="scroll-pane">
-            <h3>SAVED TUNES (VLC PLAYER)</h3>
-            <div id="library-list"></div>
+        <div class="settings-pane" id="library-list">
+            <h3>SAVED TUNES</h3>
+            <p id="empty-lib">No tunes recorded yet. Open both hands in-game to save!</p>
         </div>
-        <button class="btn" onclick="showScene('main')">BACK TO MENU</button>
+        <button class="btn" onclick="showPane('main')">BACK TO MENU</button>
     </div>
 
-    <div id="dashboard" class="hidden">
-        <div>HANDS: <span id="stat-hands">0</span></div>
-        <div>ACTIVE: <span id="stat-fingers">0</span></div>
+    <div id="nav-header" class="hidden">
+        <button class="btn" style="pointer-events: auto;" onclick="exitToMenu()">MENU</button>
+        <div style="display:flex; gap:10px;">
+            <div id="mode-pill" class="hud-pill">MODE: PERFORM</div>
+            <div id="stat-pill" class="hud-pill">FINGERS: 0</div>
+        </div>
     </div>
-    <div id="mode-indicator" class="hidden">MODE: PERFORM</div>
 
     <div id="countdown-box" class="hidden">
-        <div id="timer-msg">STARTING</div>
+        <div id="timer-msg">RECORDING</div>
         <div id="timer-val">3</div>
     </div>
 
@@ -88,164 +78,179 @@
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], currentMode = 'PERFORM', library = [], isPerforming = false;
-let rClenchTime = 0, lClenchTime = 0, bothClenchTime = 0, prayerTime = 0, startTime = 0;
+let synth, currentMode = 'PERFORM', isLive = false, library = [], recording = [];
+let startTime = 0, rFistTime = 0, lFistTime = 0, bothOpenTime = 0, bothFistTime = 0;
 const notes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-let fingerStates = {}, pulses = [];
+let fingerStates = {}, ripples = [];
 
-async function enterPlay() {
-    await Tone.start();
-    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+const video = document.getElementById('input_video');
+const canvas = document.getElementById('output_canvas');
+const ctx = canvas.getContext('2d');
+
+// --- INITIALIZE ---
+async function initPerformance() {
+    if (!synth) {
+        await Tone.start();
+        synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    }
     document.getElementById('ui-main').classList.add('hidden');
-    document.getElementById('dashboard').classList.remove('hidden');
-    document.getElementById('mode-indicator').classList.remove('hidden');
-    isPerforming = true;
+    document.getElementById('nav-header').classList.remove('hidden');
+    isLive = true;
     startCamera();
 }
 
-function showScene(scene) {
+function showPane(pane) {
     document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
-    document.getElementById(`ui-${scene}`).classList.remove('hidden');
-    if(scene === 'library') renderLibrary();
+    document.getElementById(`ui-${pane}`).classList.remove('hidden');
 }
 
-// Generate Mixer
+function exitToMenu() {
+    isLive = false;
+    showPane('main');
+    document.getElementById('nav-header').classList.add('hidden');
+}
+
+// --- GENERATE MIXER & KEYS ---
 const mixer = document.getElementById('mixer-container');
-['L-Thumb','L-Index','L-Mid','L-Ring','L-Pinky','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((f, i) => {
-    mixer.innerHTML += `<div class="slider-row"><span>${f}</span><input type="range" min="0" max="1" step="0.1" value="0.7"><button onclick="synth.triggerAttackRelease('${notes[i]}','8n')">TEST</button></div>`;
+const keys = document.getElementById('key-assign-container');
+const fingerNames = ['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'];
+
+fingerNames.forEach((name, i) => {
+    mixer.innerHTML += `<div class="slider-row"><span>${name}</span><input type="range" id="vol-${i}" min="-20" max="0" value="-6"><button class="btn" onclick="testSound('${notes[i]}')">TEST</button></div>`;
+    keys.innerHTML += `<div class="slider-row"><span>${name} Note</span><select id="key-${i}">${notes.map(n=>`<option ${n==notes[i]?'selected':''}>${n}</option>`).join('')}</select></div>`;
 });
 
-function getStrictFist(lm) {
+async function testSound(note) {
+    if(!synth) { await Tone.start(); synth = new Tone.PolySynth(Tone.Synth).toDestination(); }
+    synth.triggerAttackRelease(note, "8n");
+}
+
+// --- GESTURE LOGIC ---
+function getHandStats(lm) {
     const wrist = lm[0];
-    const fingers = [8, 12, 16]; // Index, Mid, Ring
+    const tips = [8, 12, 16]; // Core fingers for clench
     let distSum = 0;
-    fingers.forEach(id => distSum += Math.hypot(lm[id].x - wrist.x, lm[id].y - wrist.y));
-    const pinkyDist = Math.hypot(lm[20].x - wrist.x, lm[20].y - wrist.y);
-    return { isClenched: (distSum/3) < 0.14, pinkyOut: pinkyDist > 0.22 };
+    tips.forEach(id => distSum += Math.hypot(lm[id].x - wrist.x, lm[id].y - wrist.y));
+    const isFist = (distSum/3) < 0.13;
+    const isFullOpen = (distSum/3) > 0.4; // Both hands spread wide
+    return { isFist, isFullOpen };
 }
 
 function onResults(results) {
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    let rFist = false, lFist = false, handData = [], totalFingers = 0;
-
-    // Pulse Animation
-    pulses.forEach((p, i) => {
-        p.r += 4; p.a -= 0.03;
-        canvasCtx.strokeStyle = `rgba(0, 242, 255, ${p.a})`;
-        canvasCtx.beginPath(); canvasCtx.arc(p.x, p.y, p.r, 0, Math.PI*2); canvasCtx.stroke();
-        if(p.a <= 0) pulses.splice(i, 1);
+    if(!isLive) return;
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw Professional Ripple Animation
+    ripples.forEach((r, i) => {
+        r.rad += 3; r.alpha -= 0.02;
+        ctx.strokeStyle = `rgba(0, 242, 255, ${r.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        ctx.fillStyle = `rgba(0, 242, 255, ${r.alpha/2})`;
+        ctx.font = "bold 14px Segoe UI";
+        ctx.fillText(r.note, r.x - 10, r.y - r.rad - 5);
+        if(r.alpha <= 0) ripples.splice(i, 1);
     });
+
+    let rf = false, lf = false, bo = false, bf = false;
+    let activeFingers = 0;
 
     if (results.multiHandLandmarks) {
-        document.getElementById('stat-hands').innerText = results.multiHandLandmarks.length;
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label === "Left" ? "Right" : "Left";
-            const fist = getStrictFist(lm);
-            if(fist.isClenched && !fist.pinkyOut) {
-                if(side === "Right") rFist = true; else lFist = true;
+            const stats = getHandStats(lm);
+            
+            if(stats.isFist) { if(side === "Right") rf = true; else lf = true; }
+            if(stats.isFullOpen) bo = true;
+
+            // Only allow notes if hand is NOT clenching
+            if(!stats.isFist) {
+                [4, 8, 12, 16, 20].forEach((id, fIdx) => {
+                    const tip = lm[id];
+                    const x = (1-tip.x) * canvas.width;
+                    const y = tip.y * canvas.height;
+                    const isBent = tip.y > lm[id-1].y;
+                    
+                    if(isBent) {
+                        activeFingers++;
+                        if(!fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
+                            const noteIdx = Math.floor((1-tip.x)*(notes.length-1));
+                            const n = notes[noteIdx];
+                            synth.triggerAttackRelease(n, "4n");
+                            ripples.push({x, y, rad: 10, alpha: 1.0, note: n});
+                            if(currentMode === 'RECORDING') recording.push({note: n, time: Date.now()-startTime});
+                            fingerStates[`${side}_${id}`] = true;
+                        }
+                    } else { fingerStates[`${side}_${id}`] = false; }
+
+                    // Finger Labels
+                    ctx.fillStyle = isBent ? "var(--gold)" : "white";
+                    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.font = "10px sans-serif";
+                    ctx.fillText(`${side} ${fIdx==0?'Thumb':fIdx==4?'Pinky':'Finger'}`, x - 20, y - 15);
+                });
             }
-            handData.push({lm, side});
-
-            [4, 8, 12, 16, 20].forEach(id => {
-                const tip = lm[id];
-                const isBent = tip.y > lm[id-1].y;
-                const x = (1-tip.x) * canvasElement.width;
-                const y = tip.y * canvasElement.height;
-                if(isBent) totalFingers++;
-
-                if(isBent && !fingerStates[`${side}_${id}`] && isPerforming && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                    const noteIdx = Math.floor((1-tip.x)*(notes.length-1));
-                    synth.triggerAttackRelease(notes[noteIdx], "4n");
-                    pulses.push({x, y, r: 10, a: 1.0});
-                    if(currentMode==='RECORDING') recording.push({note: notes[noteIdx], time: Date.now() - startTime});
-                    fingerStates[`${side}_${id}`] = true;
-                } else if(!isBent) fingerStates[`${side}_${id}`] = false;
-                
-                canvasCtx.fillStyle = isBent ? "var(--gold)" : "white";
-                canvasCtx.beginPath(); canvasCtx.arc(x, y, 8, 0, Math.PI*2); canvasCtx.fill();
-            });
         });
+        
+        if(rf && lf) bf = true;
     }
-    document.getElementById('stat-fingers').innerText = totalFingers;
+    document.getElementById('stat-pill').innerText = `FINGERS: ${activeFingers}`;
 
-    // --- LOGIC STATES ---
+    // --- STATE MACHINE ---
     const now = Date.now();
-    const timerBox = document.getElementById('countdown-box');
-    const tVal = document.getElementById('timer-val');
-    const tMsg = document.getElementById('timer-msg');
+    const box = document.getElementById('countdown-box');
+    const val = document.getElementById('timer-val');
+    const msg = document.getElementById('timer-msg');
 
-    if (rFist && !lFist) {
-        if(!rClenchTime) rClenchTime = now;
-        let elap = Math.floor((now-rClenchTime)/1000);
-        timerBox.classList.remove('hidden'); tVal.innerText = 3-elap;
-        tMsg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
-        tVal.style.color = currentMode==='RECORDING' ? "var(--stop)" : "var(--rec)";
+    if (rf && !lf) { // RIGHT FIST -> REC/STOP
+        if(!rFistTime) rFistTime = now;
+        let elap = Math.floor((now-rFistTime)/1000);
+        box.classList.remove('hidden'); val.innerText = 3-elap;
+        msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
+        val.style.color = currentMode==='RECORDING' ? "var(--stop)" : "var(--rec)";
         if(elap >= 3) {
-            currentMode = (currentMode==='RECORDING') ? 'STOP' : 'RECORDING';
-            if(currentMode==='RECORDING') { recording = []; startTime = now; }
-            rClenchTime = now + 5000; timerBox.classList.add('hidden');
+            currentMode = currentMode==='RECORDING'?'STOP':'RECORDING';
+            if(currentMode==='RECORDING') { recording=[]; startTime=now; }
+            rFistTime = now+4000; box.classList.add('hidden');
         }
-    } else if (lFist && !rFist && currentMode === 'STOP') {
-        if(!lClenchTime) lClenchTime = now;
-        let elap = Math.floor((now-lClenchTime)/1000);
-        timerBox.classList.remove('hidden'); tVal.innerText = 3-elap;
-        tMsg.innerText = "PLAYING"; tVal.style.color = "var(--play)";
-        if(elap >= 3) {
-            currentMode = 'PLAY'; timerBox.classList.add('hidden');
+    } else if (lf && !rf && currentMode === 'STOP') { // LEFT FIST -> PLAY
+        if(!lFistTime) lFistTime = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistTime)/1000);
+        msg.innerText = "PLAYING"; val.style.color = "var(--play)";
+        if(now-lFistTime >= 3000) {
+            currentMode = 'PLAY'; box.classList.add('hidden');
             recording.forEach(e => setTimeout(()=>synth.triggerAttackRelease(e.note,"4n"), e.time));
-            setTimeout(()=>currentMode='STOP', recording[recording.length-1].time + 1000);
-            lClenchTime = now + 5000;
+            setTimeout(()=>currentMode='STOP', (recording[recording.length-1]?.time || 0)+1000);
+            lFistTime = now+4000;
         }
-    } else if (rFist && lFist && currentMode === 'STOP') {
-        if(!bothClenchTime) bothClenchTime = now;
-        let elap = Math.floor((now-bothClenchTime)/1000);
-        timerBox.classList.remove('hidden'); tVal.innerText = 5-elap;
-        tMsg.innerText = "RESETTING"; tVal.style.color = "var(--new)";
-        if(elap >= 5) { recording = []; currentMode = 'PERFORM'; bothClenchTime = now+5000; tVal.innerText="NEW"; }
-    } else if (handData.length === 2 && Math.hypot(handData[0].lm[9].x - handData[1].lm[9].x, handData[0].lm[9].y - handData[1].lm[9].y) < 0.1) {
-        if(!prayerTime) prayerTime = now;
-        let elap = Math.floor((now-prayerTime)/1000);
-        timerBox.classList.remove('hidden'); tVal.innerText = 3-elap;
-        tMsg.innerText = "SAVING"; tVal.style.color = "var(--neon)";
-        if(elap >= 3) { library.push({id: Date.now(), data: [...recording]}); prayerTime = now+5000; tVal.innerText="SAVED"; }
+    } else if (bf && currentMode === 'STOP') { // BOTH FISTS -> NEW
+        if(!bothFistTime) bothFistTime = now;
+        box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothFistTime)/1000);
+        msg.innerText = "RESETTING"; val.style.color = "var(--new)";
+        if(now-bothFistTime >= 5000) { recording=[]; currentMode='PERFORM'; bothFistTime=now+5000; }
+    } else if (results.multiHandLandmarks?.length === 2 && bo && currentMode === 'STOP') { // OPEN BOTH -> SAVE
+        if(!bothOpenTime) bothOpenTime = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-bothOpenTime)/1000);
+        msg.innerText = "SAVING"; val.style.color = "var(--neon)";
+        if(now-bothOpenTime >= 3000) { library.push({t: new Date().toLocaleTimeString(), d: [...recording]}); bothOpenTime=now+4000; val.innerText="SAVED"; }
     } else {
-        rClenchTime = lClenchTime = bothClenchTime = prayerTime = 0;
-        timerBox.classList.add('hidden');
+        rFistTime = lFistTime = bothFistTime = bothOpenTime = 0;
+        box.classList.add('hidden');
     }
-    document.getElementById('mode-indicator').innerText = `MODE: ${currentMode}`;
-    canvasCtx.restore();
+    document.getElementById('mode-pill').innerText = `MODE: ${currentMode}`;
+    ctx.restore();
 }
 
-function renderLibrary() {
-    const list = document.getElementById('library-list');
-    list.innerHTML = library.length === 0 ? "<p>No saved tunes yet.</p>" : "";
-    library.forEach((item, i) => {
-        list.innerHTML += `<div style="display:flex; justify-content:space-between; margin:10px; border:1px solid #444; padding:10px;">
-            <span>Tune #${i+1} (${item.data.length} notes)</span>
-            <button class="btn" onclick="playSaved(${i})">PLAY VLC</button>
-        </div>`;
-    });
-}
-
-function playSaved(idx) {
-    const tune = library[idx].data;
-    tune.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time));
-}
-
-const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
-hands.onResults(onResults);
-const videoElement = document.getElementById('input_video');
-const canvasElement = document.getElementById('output_canvas');
-const canvasCtx = canvasElement.getContext('2d');
+const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+handTracker.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
+handTracker.onResults(onResults);
 
 function startCamera() {
-    new Camera(videoElement, {
+    new Camera(video, {
         onFrame: async () => {
-            canvasElement.width = window.innerWidth;
-            canvasElement.height = window.innerHeight;
-            await hands.send({image: videoElement});
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            await handTracker.send({image: video});
         }, width: 1280, height: 720
     }).start();
 }
