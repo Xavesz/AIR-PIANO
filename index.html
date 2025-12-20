@@ -9,169 +9,178 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; }
         
-        #output_canvas, #input_video { transform: scaleX(var(--mirror, -1)); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        /* Mirroring & Fullscreen */
+        #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
         
-        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 0.5s; text-align: center; backdrop-filter: blur(10px); }
-        .hidden { display: none !important; }
+        /* Professional UI Layers */
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 0.6s ease-in-out; text-align: center; padding: 20px; box-sizing: border-box; }
+        .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
         
-        .brand-header { font-size: clamp(2rem, 8vw, 3rem); letter-spacing: 15px; margin: 0; font-weight: 200; }
-        .btn { padding: 12px 30px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 5px; font-size: 0.65rem; transition: 0.3s; }
-        .btn:hover { border-color: var(--divine); background: rgba(0,242,255,0.1); }
+        .brand-header { font-size: clamp(1.8rem, 8vw, 3rem); letter-spacing: 12px; margin: 0; font-weight: 200; color: white; }
+        .btn { padding: 14px 35px; border: 1px solid var(--divine); background: rgba(0,242,255,0.05); color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 8px; font-size: 0.75rem; width: 80%; max-width: 300px; transition: 0.3s; }
+        .btn:active { background: var(--divine); color: black; transform: scale(0.95); }
 
         /* Neural HUD */
-        #neural-hud { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 1100; pointer-events: none; }
-        .hud-card { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(0,242,255,0.2); font-size: 0.6rem; letter-spacing: 1px; min-width: 100px; }
-        .active-hand { color: var(--divine); text-shadow: 0 0 10px var(--divine); }
-
-        /* Pitch Visualizer Bar */
-        #pitch-guide { position: absolute; top: 0; left: 0; width: 100%; height: 4px; display: flex; z-index: 1100; opacity: 0.5; }
-        .p-zone { flex: 1; border-right: 1px solid rgba(255,255,255,0.1); }
-
-        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.6rem; color: #444; }
+        #neural-hud { position: absolute; top: 20px; width: 90%; display: flex; justify-content: space-between; z-index: 1100; pointer-events: none; }
+        .hand-status { background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); font-size: 0.65rem; min-width: 80px; }
+        .status-on { border-color: var(--divine); color: var(--divine); text-shadow: 0 0 5px var(--divine); }
+        
+        #manual { max-width: 400px; background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; font-size: 0.8rem; line-height: 1.5; margin-bottom: 20px; }
+        
+        .privacy-tag { font-size: 0.6rem; color: #555; margin-top: 20px; border-top: 1px solid #222; padding-top: 10px; width: 80%; }
+        footer { position: absolute; bottom: 15px; width: 100%; text-align: center; z-index: 1200; font-size: 0.65rem; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
         <h1 class="brand-header">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.6rem; color: #555; letter-spacing: 5px; margin-top: 5px;">BY PRASURJYA DEKA</div>
+        <div style="font-size: 0.6rem; color: #555; letter-spacing: 4px; margin: 5px 0 30px;">PRASURJYA DEKA | V5 MOBILE</div>
         
-        <div style="margin: 30px 0; max-width: 400px; font-size: 0.8rem; color: #aaa;">
-            <p>Neural hand-tracking active. High pitches are mapped to the <b>Right</b>, deep resonances to the <b>Left</b>.</p>
-            <div style="display: flex; justify-content: center; gap: 10px;">
-                <button class="btn" id="mBtn" onclick="toggleMirror()">Mirror: ON</button>
-                <button class="btn" id="lBtn" onclick="toggleLefty()">Lefty: OFF</button>
-            </div>
+        <div id="manual">
+            <b style="color:var(--gold);">MOBILE PERFORMANCE GUIDE:</b><br><br>
+            • 🖐 <b>Left Side:</b> Produces Deep Bass Resonance.<br>
+            • 🖐 <b>Right Side:</b> Produces Crystalline Melodies.<br>
+            • ✊ <b>Mute:</b> Close fingers into a fist to stop audio.<br>
+            • 📱 <b>Privacy:</b> No video data ever leaves this device.
         </div>
 
-        <div>
-            <button class="btn" style="border-color:var(--gold); color:var(--gold); font-size: 0.9rem;" onclick="startApp('CRYSTAL')">Launch Crystal</button>
-            <button class="btn" style="font-size: 0.9rem;" onclick="startApp('SOUL')">Launch Soul</button>
-        </div>
-    </div>
+        <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="startApp('MYTHIC')">Mythic Branch</button>
+        <button class="btn" onclick="startApp('GALACTIC')">Galactic Branch</button>
 
-    <div id="pitch-guide" class="hidden">
-        <div class="p-zone" style="background: #1a0000;">BASS</div>
-        <div class="p-zone" style="background: #001a1a;">MID</div>
-        <div class="p-zone" style="background: #00001a;">TREBLE</div>
+        <div class="privacy-tag">
+            <b>NON-STORAGE COMPLIANCE:</b> This app uses Local Browser Inference. No faces or images are captured or sent to servers.
+        </div>
     </div>
 
     <div id="neural-hud" class="hidden">
-        <div class="hud-card" id="hand-count">HANDS: 0</div>
-        <div class="hud-card" id="hand-type">MODE: STANDBY</div>
-        <div class="hud-card" id="pitch-data">FREQ: ---</div>
+        <div id="left-hand-stat" class="hand-status">LEFT: OFF</div>
+        <button class="btn" style="width:auto; padding:8px 20px; margin:0; pointer-events:auto;" onclick="location.reload()">EXIT</button>
+        <div id="right-hand-stat" class="hand-status">RIGHT: OFF</div>
     </div>
 
-    <div id="exit-btn" class="hidden" style="position:absolute; top:20px; left:20px; z-index:1200;">
-        <button class="btn" onclick="location.reload()">TERMINATE</button>
-    </div>
-
-    <footer>© 2025 PRASURJYA DEKA | LOCAL NEURAL PROCESSING</footer>
+    <footer>
+        © 2025 PRASURJYA DEKA | 
+        <button onclick="sendFeedback()" style="background:none; border:none; color:#444; cursor:pointer; font-size:0.65rem; text-transform:uppercase;">Feedback</button>
+    </footer>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" playsinline style="display:none"></video>
 
 <script>
 let synth, isLive = false, lastNotes = {}, sparkles = [];
-let isLefty = false, isMirrored = true;
-
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-function toggleMirror() {
-    isMirrored = !isMirrored;
-    document.body.style.setProperty('--mirror', isMirrored ? "-1" : "1");
-    document.getElementById('mBtn').innerText = `Mirror: ${isMirrored ? 'ON' : 'OFF'}`;
+async function startApp(mode) {
+    try {
+        await Tone.start();
+        const reverb = new Tone.Reverb({decay: 6, wet: 0.5}).toDestination();
+        
+        // Advanced FM Synthesis for Mobile
+        synth = new Tone.PolySynth(Tone.FMSynth, {
+            maxPolyphony: 16, // Optimized for Android mobile CPU
+            harmonicity: mode === 'MYTHIC' ? 8 : 1.5,
+            modulationIndex: 20,
+            envelope: { attack: 0.2, release: 3 }
+        }).connect(reverb);
+
+        document.getElementById('menu').classList.add('hidden');
+        document.getElementById('neural-hud').classList.remove('hidden');
+        isLive = true;
+        initTracking();
+    } catch (e) { alert("Enable Camera & Audio to begin."); }
 }
 
-function toggleLefty() {
-    isLefty = !isLefty;
-    document.getElementById('lBtn').innerText = `Lefty: ${isLefty ? 'ON' : 'OFF'}`;
-}
-
-async function startApp(branch) {
-    await Tone.start();
-    const reverb = new Tone.Reverb({decay: 6, wet: 0.4}).toDestination();
-    synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 16, // Optimized for stability
-        harmonicity: branch === 'CRYSTAL' ? 7 : 1.5,
-        modulationIndex: 20,
-        envelope: { attack: 0.2, release: 3 }
-    }).connect(reverb);
-
-    document.querySelectorAll('.ui-layer').forEach(el => el.classList.add('hidden'));
-    document.getElementById('neural-hud').classList.remove('hidden');
-    document.getElementById('pitch-guide').classList.remove('hidden');
-    document.getElementById('exit-btn').classList.remove('hidden');
-    isLive = true;
-    init();
+async function sendFeedback() {
+    const msg = prompt("Message for Prasurjya Deka:");
+    if (!msg) return;
+    await fetch("https://formspree.io/f/mykgkorl", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: "Prasurjya Deka", feedback: msg })
+    });
+    alert("Feedback Submitted.");
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    const handsDetected = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-    document.getElementById('hand-count').innerText = `HANDS: ${handsDetected}`;
+    // Reset HUD Stats
+    document.getElementById('left-hand-stat').innerText = "LEFT: OFF";
+    document.getElementById('left-hand-stat').classList.remove('status-on');
+    document.getElementById('right-hand-stat').innerText = "RIGHT: OFF";
+    document.getElementById('right-hand-stat').classList.remove('status-on');
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const label = results.multiHandedness[i].label; // Left/Right
-            const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.12;
+            const side = results.multiHandedness[i].label; // Left/Right
+            const hudId = side === "Left" ? 'left-hand-stat' : 'right-hand-stat';
+            
+            // UI Update: Hand Visible
+            document.getElementById(hudId).innerText = `${side.toUpperCase()}: ACTIVE`;
+            document.getElementById(hudId).classList.add('status-on');
 
-            document.getElementById('hand-type').innerText = label.toUpperCase() + (isFist ? " (MUTE)" : " (ACTIVE)");
+            const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.12;
 
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
                 const active = tip.y < lm[id-2].y;
-                const fingerKey = `${label}-${id}`;
+                const fingerKey = `${side}-${id}`;
                 
                 if(active && !isFist) {
-                    let zone = Math.floor(tip.x * 12);
-                    if(isMirrored) zone = 11 - zone;
-                    
-                    const notes = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-                    const note = notes[Math.max(0, Math.min(zone, 11))];
-                    document.getElementById('pitch-data').innerText = `FREQ: ${note}`;
+                    // Optimized Pitch Scale
+                    const zone = Math.floor(tip.x * 8);
+                    const scale = ['C4','D4','E4','F4','G4','A4','B4','C5'];
+                    const note = scale[Math.min(zone, 7)];
 
                     if(lastNotes[fingerKey] !== note) {
                         synth.triggerAttackRelease(note, "4n", undefined, 0.4);
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 30) {
-                            sparkles.push({x:tip.x*canvas.width, y:tip.y*canvas.height, l:1.0});
+                            sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                         }
                     }
-                    // Visual Neural Point
-                    ctx.fillStyle = label === "Right" ? "var(--divine)" : "var(--gold)";
-                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 5, 0, Math.PI*2); ctx.fill();
-                } else { lastNotes[fingerKey] = null; }
+                    
+                    // Visual Feedback: Fingertips Only
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = "var(--divine)";
+                    ctx.fillStyle = "white";
+                    ctx.beginPath(); 
+                    ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 5, 0, Math.PI*2); 
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                } else {
+                    lastNotes[fingerKey] = null;
+                }
             });
         });
-    } else {
-        document.getElementById('hand-type').innerText = "SEARCHING...";
     }
 
-    // Performance particles
+    // Performance Optimized Glitter
     for (let i = sparkles.length - 1; i >= 0; i--) {
         let s = sparkles[i]; s.l -= 0.04;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.l})`;
+        ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
         ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI*2); ctx.fill();
     }
 }
 
-function init() {
-    const hands = new Hands({locateFile: (file) => `https://cdn.npmmirror.com/package/@mediapipe/hands/${file}`});
+function initTracking() {
+    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    // Lite model (0) is mandatory for Android lag-free performance
     hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
     hands.onResults(onResults);
+    
     new Camera(video, {
         onFrame: async () => {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             await hands.send({image: video});
-        }, width: 640, height: 480
+        }, width: 480, height: 360 // Lower res = Faster AI processing
     }).start();
 }
 </script>
