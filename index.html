@@ -8,106 +8,127 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        
+        :root { --accent: #00f2ff; --bg: #050508; --panel: rgba(255,255,255,0.03); }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', -apple-system, sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
         
-        /* Glass UI Overlay */
-        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0a0a25 0%, #000 100%); transition: 0.8s ease; text-align: center; }
-        .hidden { opacity: 0 !important; pointer-events: none; }
+        /* Professional UI Layers */
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0a0a20 0%, #000 100%); transition: 1s cubic-bezier(0.4, 0, 0.2, 1); text-align: center; }
+        .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
         
-        .brand-header { font-size: clamp(2rem, 10vw, 4rem); letter-spacing: 15px; margin: 0; font-weight: 200; text-shadow: 0 0 20px rgba(0,242,255,0.5); }
-        .btn { padding: 15px 40px; border: 1px solid var(--divine); background: rgba(0,242,255,0.1); color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin: 10px; transition: 0.3s; }
-        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 30px var(--divine); }
+        .header { font-size: clamp(2rem, 8vw, 3rem); letter-spacing: 18px; font-weight: 200; text-transform: uppercase; margin: 0; }
+        .author { font-size: 0.7rem; color: #555; letter-spacing: 6px; margin-top: 8px; text-transform: uppercase; }
 
-        /* Professional Control Bar */
-        #control-bar { position: absolute; bottom: 30px; width: 90%; left: 5%; display: flex; justify-content: space-between; align-items: center; z-index: 1500; background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(15px); box-sizing: border-box; }
-        .safety-badge { font-size: 0.65rem; color: #888; letter-spacing: 1px; }
-        .feedback-btn { background: var(--divine); color: black; border: none; padding: 8px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; }
+        .btn-group { display: flex; gap: 20px; margin: 40px 0; }
+        .btn { padding: 14px 40px; border: 1px solid rgba(255,255,255,0.15); background: var(--panel); color: white; border-radius: 4px; cursor: pointer; font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; transition: 0.4s; }
+        .btn:hover { border-color: var(--accent); background: rgba(0,242,255,0.05); box-shadow: 0 0 30px rgba(0,242,255,0.1); }
 
-        #manual { max-width: 400px; font-size: 0.85rem; line-height: 1.6; margin-bottom: 30px; color: #bbb; }
+        /* Integrated Safety & Feedback Section */
+        .info-panel { max-width: 500px; padding: 30px; border-radius: 4px; background: var(--panel); border: 1px solid rgba(255,255,255,0.05); text-align: left; }
+        .info-title { font-size: 0.7rem; color: var(--accent); letter-spacing: 2px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .info-text { font-size: 0.85rem; color: #999; line-height: 1.7; }
+        
+        .footer-tools { margin-top: 30px; display: flex; gap: 20px; align-items: center; }
+        .text-link { background: none; border: none; color: #555; cursor: pointer; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid transparent; }
+        .text-link:hover { color: white; border-bottom-color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <h1 class="brand-header">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.7rem; color: #555; letter-spacing: 5px; margin: 10px 0 30px;">PRASURJYA DEKA</div>
+        <h1 class="header">QUANTUM SOUL</h1>
+        <div class="author">By Prasurjya Deka</div>
         
-        <div id="manual">
-            <b>SIMPLE GUIDE:</b><br>
-            1. Select a Sound Branch below.<br>
-            2. Show your <b>Fingertips</b> to the camera.<br>
-            3. Left screen = Low Pitch | Right screen = High Pitch.
+        <div class="btn-group">
+            <button class="btn" onclick="startApp('CRYSTAL')">Crystal Branch</button>
+            <button class="btn" onclick="startApp('SOUL')">Soul Branch</button>
         </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="startApp('MYTHIC')">Mythic</button>
-            <button class="btn" onclick="startApp('SOUL')">Soul</button>
+
+        <div class="info-panel">
+            <div class="info-title">Privacy & Operation Protocol</div>
+            <div class="info-text">
+                This interface utilizes <b>Local Edge Inference</b>. All biometric hand-tracking is processed strictly within your browser's temporary memory. No video data or personal identifiers are ever transmitted to or stored on external servers. 
+            </div>
+            <div class="footer-tools">
+                <button class="text-link" onclick="sendFeedback()">Submit Feedback</button>
+                <span style="color:#222">|</span>
+                <span class="text-link" style="cursor:default">Verified Secure</span>
+            </div>
         </div>
     </div>
 
-    <div id="control-bar" class="hidden">
-        <div class="safety-badge">🛡️ PRIVACY: LOCAL PROCESSING ONLY</div>
-        <button class="btn" style="margin:0; padding:8px 20px; font-size:0.6rem;" onclick="location.reload()">EXIT</button>
-        <button class="feedback-btn" onclick="sendFeedback()">Feedback</button>
+    <div id="hud" class="hidden" style="position:absolute; top:30px; left:30px; z-index:1000;">
+        <button class="btn" style="padding:8px 20px; font-size:0.6rem;" onclick="location.reload()">Terminate</button>
     </div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" playsinline style="display:none"></video>
 
 <script>
-let synth, isLive = false, lastNotes = {}, sparkles = [], stars = [];
+let synth, isLive = false, lastNotes = {}, sparkles = [], meteors = [];
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-// Generate 100 static stars for the background
-for(let i=0; i<100; i++) {
-    stars.push({x: Math.random(), y: Math.random(), s: Math.random()*2});
+// Optimized Meteor Engine
+function createMeteor() {
+    if (meteors.length < 2 && Math.random() < 0.01) {
+        meteors.push({
+            x: Math.random() * canvas.width,
+            y: 0,
+            len: Math.random() * 80 + 50,
+            v: Math.random() * 15 + 10,
+            opacity: 1
+        });
+    }
 }
 
 async function startApp(branch) {
     await Tone.start();
-    const reverb = new Tone.Reverb(6).toDestination();
+    const reverb = new Tone.Reverb(8).toDestination();
     synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 20,
-        harmonicity: branch === 'MYTHIC' ? 6 : 1.5,
+        maxPolyphony: 24,
+        harmonicity: branch === 'CRYSTAL' ? 6 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.2, release: 3.5 }
+        envelope: { attack: 0.3, release: 4 }
     }).connect(reverb);
 
     document.getElementById('menu').classList.add('hidden');
-    document.getElementById('control-bar').classList.remove('hidden');
+    document.getElementById('hud').classList.remove('hidden');
     isLive = true;
     init();
 }
 
 async function sendFeedback() {
-    const msg = prompt("Feedback for Prasurjya Deka:");
+    const msg = prompt("Professional Feedback for Prasurjya Deka:");
     if (!msg) return;
     await fetch("https://formspree.io/f/mykgkorl", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: "Prasurjya Deka", message: msg })
     });
-    alert("Feedback received. Thank you!");
+    alert("Feedback received.");
 }
 
 function onResults(results) {
     if(!isLive) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw Starfield Background
-    ctx.fillStyle = "white";
-    stars.forEach(star => {
-        ctx.globalAlpha = 0.3;
+    // Background Rendering
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Optimized Meteor Draw
+    createMeteor();
+    meteors.forEach((m, i) => {
+        m.x -= m.v; m.y += m.v; m.opacity -= 0.02;
+        if (m.opacity <= 0) meteors.splice(i, 1);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${m.opacity})`;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(star.x * canvas.width, star.y * canvas.height, star.s, 0, Math.PI*2);
-        ctx.fill();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x + m.len, m.y - m.len);
+        ctx.stroke();
     });
-    ctx.globalAlpha = 1.0;
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
@@ -118,40 +139,37 @@ function onResults(results) {
                 const fingerKey = `${side}-${id}`;
                 
                 if(active) {
-                    const zone = Math.floor(tip.x * 10);
-                    const scale = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5'];
-                    const note = scale[Math.min(zone, 9)];
+                    const zone = Math.floor(tip.x * 12);
+                    const scale = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
+                    const note = scale[Math.min(zone, 11)];
 
                     if(lastNotes[fingerKey] !== note) {
                         synth.triggerAttackRelease(note, "4n", undefined, 0.4);
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 40) {
-                            sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0, c: side==="Left" ? '0,242,255' : '255,215,0'});
+                            sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                         }
                     }
-                    // Glowing Fingertips
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = side === "Left" ? "var(--divine)" : "var(--gold)";
-                    ctx.fillStyle = "white";
-                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 5, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0;
+                    // Minimalist Interaction Points
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 3, 0, Math.PI*2); ctx.fill();
                 } else { lastNotes[fingerKey] = null; }
             });
         });
     }
 
-    // Interactive Glitter
+    // Interactive Glitter (Minimalist)
     for (let i = sparkles.length - 1; i >= 0; i--) {
         let s = sparkles[i]; s.l -= 0.03;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
-        ctx.fillStyle = `rgba(${s.c}, ${s.l})`;
-        ctx.beginPath(); ctx.arc(s.x, s.y, 2.5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI*2); ctx.fill();
     }
 }
 
 function init() {
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.75 });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.8 });
     hands.onResults(onResults);
     new Camera(video, {
         onFrame: async () => {
