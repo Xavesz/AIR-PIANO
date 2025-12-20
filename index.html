@@ -11,19 +11,16 @@
     <style>
         :root { --accent: #00f2ff; --gold: #ffd700; --bg: #010816; --glass: rgba(255, 255, 255, 0.05); }
         body { margin: 0; background: var(--bg); color: #fff; overflow: hidden; font-family: 'Montserrat', sans-serif; }
-        
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
-        /* Professional Interface Layer */
         .ui-layer { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             background: radial-gradient(circle at center, #0a244d 0%, #010816 100%); 
-            transition: 1s ease; text-align: center;
+            transition: 1.2s ease; text-align: center;
         }
-        .hidden { opacity: 0 !important; pointer-events: none; filter: blur(50px); }
+        .hidden { opacity: 0 !important; pointer-events: none; filter: blur(50px); transform: scale(1.1); }
 
-        /* Pulsating Neon Aura */
         .neon-pulse-aura {
             position: absolute; width: 650px; height: 650px; border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 242, 255, 0.18) 0%, transparent 70%);
@@ -31,7 +28,6 @@
         }
         @keyframes pulse-aura { 0%, 100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.3); opacity: 0.5; } }
 
-        /* The Executive Frame */
         .executive-panel {
             position: relative; padding: 50px; border-radius: 8px;
             background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.15);
@@ -39,7 +35,7 @@
             box-shadow: 0 0 120px rgba(0, 242, 255, 0.1);
         }
 
-        .main-header { font-size: clamp(2rem, 8vw, 2.8rem); letter-spacing: 25px; font-weight: 800; text-transform: uppercase; margin: 0; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
+        .main-header { font-size: clamp(2rem, 8vw, 2.8rem); letter-spacing: 20px; font-weight: 800; text-transform: uppercase; margin: 0; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
         .designer-credit { font-size: 0.75rem; color: var(--accent); letter-spacing: 12px; margin: 25px 0 40px; font-weight: 500; text-transform: uppercase; }
 
         .btn-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 45px; }
@@ -51,7 +47,6 @@
         .btn-vanguard:hover { border-color: var(--accent); background: rgba(0, 242, 255, 0.15); box-shadow: 0 0 30px rgba(0,242,255,0.3); }
         .btn-gold { border-color: rgba(255,215,0,0.4); color: var(--gold); }
 
-        /* Safety & Instruction Disclosure */
         .info-disclosure { text-align: left; font-size: 0.85rem; color: #fff; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 35px; }
         .section-tag { color: var(--accent); font-weight: 800; font-size: 0.65rem; letter-spacing: 4px; display: block; margin-bottom: 15px; text-transform: uppercase; }
         .manual-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; color: #cbd5e0; font-weight: 500; }
@@ -81,14 +76,14 @@
                 <span class="section-tag">Safety Protocol & Manual</span>
                 <div class="manual-cols">
                     <div><b>• PITCH ENGINE:</b><br>RIGHT = High Melodies<br>LEFT = Low Bass</div>
-                    <div><b>• TRACKING:</b><br>Halo Rings glow when active<br>Fist = Global Mute</div>
+                    <div><b>• AUDIO TIP:</b><br>🎧 Headphones advised<br>Fist = Global Mute</div>
                 </div>
-                <b>PRIVACY:</b> This system uses <b>Local Inference</b>. Video is processed in RAM and never stored or transmitted. 100% secure client-side execution.
+                <b>PRIVACY:</b> System uses <b>Local Inference</b>. Video is processed in volatile RAM only. No data is stored or transmitted. 100% Secure.
                 
                 <div class="footer-tray">
                     <button class="footer-link" onclick="sendFeedback()">Submit Feedback</button>
                     <button class="footer-link" onclick="shareApp()">Share App</button>
-                    <span style="color:#4a5568; font-size:0.65rem; letter-spacing:2px; font-weight:800;">STATUS: ENCRYPTED_LOCAL</span>
+                    <span style="color:#4a5568; font-size:0.65rem; letter-spacing:2px; font-weight:800;">ENCRYPTION: LOCAL_ONLY</span>
                 </div>
             </div>
         </div>
@@ -109,42 +104,29 @@ const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-// Share Function
 async function shareApp() {
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Quantum Soul',
-                text: 'Gesture-controlled sound engine by Prasurjya Deka.',
-                url: window.location.href
-            });
-        } catch (err) { console.error("Share failed", err); }
-    } else {
-        alert("Link: " + window.location.href);
-    }
+        try { await navigator.share({ title: 'Quantum Soul', text: 'Touch-free Air Piano by Prasurjya Deka.', url: window.location.href }); } catch(e){}
+    } else { alert("Link: " + window.location.href); }
 }
 
 function createMeteor() {
     if (meteors.length < 8 && Math.random() < 0.05) {
-        meteors.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * (canvas.height / 3),
-            v: Math.random() * 12 + 10,
-            len: Math.random() * 100 + 50,
-            life: 1.0
-        });
+        meteors.push({ x: Math.random()*canvas.width, y: Math.random()*(canvas.height/3), v: Math.random()*12+10, len: Math.random()*100+50, life: 1.0 });
     }
 }
 
 async function startApp(branch) {
     await Tone.start();
-    const reverb = new Tone.Reverb({decay: 6, wet: 0.5}).toDestination();
+    const reverb = new Tone.Reverb({decay: 6, wet: 0.4}).toDestination();
+    // Limiter to prevent "blasting" sound
+    const limiter = new Tone.Limiter(-6).connect(reverb);
     synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 24,
+        maxPolyphony: 20,
         harmonicity: branch === 'MYTHIC' ? 8 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.25, release: 4 }
-    }).connect(reverb);
+        envelope: { attack: 0.25, decay: 0.2, sustain: 0.5, release: 3.5 }
+    }).connect(limiter);
     document.getElementById('menu').classList.add('hidden');
     document.getElementById('stage-hud').classList.remove('hidden');
     isLive = true;
@@ -157,17 +139,16 @@ async function sendFeedback() {
     try {
         await fetch("https://formspree.io/f/mykgkorl", {
             method: "POST", headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ designer: "Prasurjya Deka", message: msg })
+            body: JSON.stringify({ developer: "Prasurjya Deka", message: msg })
         });
         alert("Transmission successful.");
-    } catch(e) { console.error("Post error"); }
+    } catch(e) {}
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.fillStyle = "rgba(1, 8, 22, 0.25)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
     createMeteor();
     meteors.forEach((m, i) => {
         m.x -= m.v; m.y += m.v; m.life -= 0.04; 
@@ -199,14 +180,9 @@ function onResults(results) {
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 40) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
-                    // NEURAL HALO RINGS
-                    ctx.shadowBlur = 25;
-                    ctx.shadowColor = "#00f2ff";
-                    ctx.strokeStyle = "#fff";
-                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 25; ctx.shadowColor = "#00f2ff"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
                     ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 10, 0, Math.PI*2); ctx.stroke();
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = "#fff";
+                    ctx.shadowBlur = 0; ctx.fillStyle = "#fff";
                     ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 3, 0, Math.PI*2); ctx.fill();
                 } else { lastNotes[fingerKey] = null; }
             });
