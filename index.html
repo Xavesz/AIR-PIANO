@@ -3,116 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro | Ultimate Polish</title>
+    <title>Air Piano Pro | Multi-Device Ultimate</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --stop: #ffa500; --gold: #ffd700; }
-        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
+        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --stop: #ffa500; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        canvas { width: 100%; height: 100%; position: absolute; z-index: 5; }
         
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,5,10,0.98); z-index: 1000; }
+        /* UI Layers */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); z-index: 1000; text-align: center; }
         .hidden { display: none !important; }
         
-        .btn { padding: 14px 30px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 10px; text-transform: uppercase; }
-        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 25px var(--neon); }
-
-        /* VLC Player Styling */
-        .vlc-container { width: 90%; background: #1a1a1a; padding: 15px; border-radius: 8px; margin: 10px 0; border: 1px solid #333; }
-        .vlc-seek { width: 100%; accent-color: var(--play); cursor: pointer; }
+        .btn { padding: 12px 25px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 8px; font-weight: bold; margin: 10px; text-transform: uppercase; }
         
-        #playback-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: var(--play); width: 0%; z-index: 600; transition: width 0.1s linear; }
+        /* HUD & VLC Progress Bar */
+        #playback-hud { position: absolute; bottom: 40px; width: 80%; left: 10%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; z-index: 500; overflow: hidden; border: 1px solid #444; }
+        #progress-fill { width: 0%; height: 100%; background: var(--play); box-shadow: 0 0 15px var(--play); transition: width 0.1s linear; }
 
-        #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 900; text-align: center; pointer-events: none; }
-        #timer-val { font-size: 10rem; font-weight: bold; line-height: 1; }
+        #countdown { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 900; pointer-events: none; text-align: center; }
+        #timer-val { font-size: clamp(5rem, 15vw, 10rem); font-weight: bold; line-height: 1; }
 
-        .pane { background: #111; padding: 30px; border-radius: 8px; width: 85%; max-height: 70%; overflow-y: auto; }
-        .row { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; }
+        .pane { background: #111; padding: 20px; border-radius: 12px; width: 90%; max-width: 600px; max-height: 70%; overflow-y: auto; border: 1px solid #333; }
+        .vlc-style { display: flex; align-items: center; gap: 10px; background: #222; margin: 10px 0; padding: 10px; border-radius: 8px; }
+        input[type=range] { flex-grow: 1; accent-color: var(--neon); }
     </style>
 </head>
 <body>
 
     <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 3rem; letter-spacing: 10px;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
-        <button class="btn" style="background:var(--play); color:black;" onclick="launchPerformance()">Launch Stage</button>
-        <button class="btn" onclick="showPane('settings')">Mixer & Keys</button>
-        <button class="btn" onclick="showPane('library')">Saved Library</button>
-        <button class="btn" onclick="showPane('how-to')">User Manual</button>
+        <h1 style="font-size: clamp(2rem, 8vw, 3.5rem); letter-spacing: 5px;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
+        <button class="btn" onclick="launchStage()" style="font-size: 1.5rem; border-color: var(--play); color: var(--play);">LAUNCH PERFORMANCE</button>
+        <button class="btn" onclick="togglePane('settings')">Mixer & Assignment</button>
+        <button class="btn" onclick="togglePane('library')">Saved Library</button>
     </div>
 
     <div id="menu-settings" class="ui-layer hidden">
-        <div class="pane" id="mixer-content"><h3>MIXER</h3></div>
-        <button class="btn" onclick="showPane('main')">Save & Return</button>
+        <div class="pane">
+            <h3>MIXER & KEY MAP</h3>
+            <div id="mixer-container"></div>
+        </div>
+        <button class="btn" onclick="togglePane('main')">Save & Exit</button>
     </div>
 
     <div id="menu-library" class="ui-layer hidden">
-        <div class="pane" id="library-content"><h3>SAVED TUNES</h3></div>
-        <button class="btn" onclick="showPane('main')">Back to Menu</button>
-    </div>
-
-    <div id="menu-how-to" class="ui-layer hidden">
-        <div class="pane">
-            <h2>MANUAL</h2>
-            <p>🔴 Right Fist: REC | 🟢 Left Fist: PLAY | 🔵 Both Open: SAVE (7s) | 🟣 Both Fists: RESET</p>
-            <button class="btn" onclick="showPane('main')">Back</button>
+        <div class="pane" id="library-content">
+            <h3>SAVED TUNES</h3>
+            <div id="lib-list">No tunes found.</div>
         </div>
+        <button class="btn" onclick="togglePane('main')">Close</button>
     </div>
 
-    <div id="playback-bar"></div>
-    <div id="countdown-box" class="hidden">
-        <div id="timer-msg" style="letter-spacing: 5px;">RECORDING</div>
-        <div id="timer-val">7</div>
-    </div>
+    <div id="playback-hud" class="hidden"><div id="progress-fill"></div></div>
+    <div id="countdown" class="hidden"><div id="t-msg"></div><div id="timer-val">3</div></div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], library = [], isLive = false, currentMode = 'PERFORM';
-let rFistStart = 0, lFistStart = 0, bothFistStart = 0, saveStart = 0, startTime = 0;
+let synth, isLive = false, currentMode = 'PERFORM', recording = [], library = [];
+let rFistStart = 0, lFistStart = 0, bothOpenStart = 0, bothFistStart = 0, startTime = 0;
 const notes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
 let ripples = [], fingerStates = {};
 
+const video = document.getElementById('input_video');
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
-const video = document.getElementById('input_video');
 
-async function launchPerformance() {
+// --- APP ROUTING ---
+async function launchStage() {
     if(!synth) { await Tone.start(); synth = new Tone.PolySynth(Tone.Synth).toDestination(); }
     document.getElementById('menu-main').classList.add('hidden');
     isLive = true;
     startCamera();
 }
 
-function showPane(pane) {
+function togglePane(pane) {
     document.querySelectorAll('.ui-layer').forEach(l => l.classList.add('hidden'));
     document.getElementById(`menu-${pane}`).classList.remove('hidden');
     if(pane === 'library') renderLibrary();
 }
 
-// --- MIXER ---
-const mixer = document.getElementById('mixer-content');
-notes.forEach((n, i) => {
-    mixer.innerHTML += `<div class="row"><span>Key ${n}</span><input type="range" min="-30" max="0" value="-6" id="vol-${i}"><button class="btn" onclick="synth.triggerAttackRelease('${n}','8n')">TEST</button></div>`;
+// --- MIXER GEN ---
+const mixer = document.getElementById('mixer-container');
+['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((f, i) => {
+    mixer.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin:10px 0;">
+        <span>${f}</span><button class="btn" style="padding:5px" onclick="synth.triggerAttackRelease('${notes[i]}','8n')">TEST</button>
+    </div>`;
 });
 
-// --- RENDER LOOP ---
+// --- GESTURES ---
+function isFist(lm) {
+    const d = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y);
+    return d < 0.13;
+}
+
 function onResults(results) {
     if(!isLive) return;
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Ripples & Interference
+    
+    // Wave Ripples & Interference
     ripples.forEach((r, i) => {
         r.rad += 4; r.alpha -= 0.02;
         ctx.strokeStyle = `rgba(0, 242, 255, ${r.alpha})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
         
-        // Large Bold Key Highlight
-        ctx.fillStyle = `rgba(255, 255, 255, ${r.alpha})`;
+        // BIG BOLD NOTE DISPLAY
+        ctx.fillStyle = `rgba(255,255,255, ${r.alpha})`;
         ctx.font = "bold 40px Arial";
         ctx.fillText(r.note, r.x - 20, r.y - r.rad - 10);
 
@@ -120,67 +120,77 @@ function onResults(results) {
     });
 
     let rf = false, lf = false, bo = false, bf = false;
+
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label === "Left" ? "Right" : "Left";
-            const wrist = lm[0];
-            const d = Math.hypot(lm[8].x - wrist.x, lm[8].y - wrist.y);
-            if(d < 0.13) { if(side === "Right") rf = true; else lf = true; }
-            if(d > 0.45) bo = true;
+            const fst = isFist(lm);
+            const open = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) > 0.45;
+            
+            if(fst) { if(side === "Right") rf = true; else lf = true; }
+            if(open) bo = true;
 
-            [4, 8, 12, 16, 20].forEach(id => {
-                const tip = lm[id];
-                const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
-                const isBent = tip.y > lm[id-1].y;
-                
-                if(isBent && d > 0.15) { // Only play if NOT clenching
-                    const note = notes[Math.floor((1-tip.x)*(notes.length-1))];
-                    if(!fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                        synth.triggerAttackRelease(note, "4n");
-                        ripples.push({x, y, rad: 5, alpha: 1.0, note});
-                        if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
+            if(!fst) {
+                [4, 8, 12, 16, 20].forEach(id => {
+                    const tip = lm[id], x = (1-tip.x)*canvas.width, y = tip.y*canvas.height;
+                    const bent = tip.y > lm[id-1].y;
+                    if(bent && !fingerStates[`${side}_${id}`] && (currentMode==='PERFORM'||currentMode==='RECORDING')) {
+                        const n = notes[Math.floor((1-tip.x)*(notes.length-1))];
+                        synth.triggerAttackRelease(n, "4n");
+                        ripples.push({x, y, rad: 5, alpha: 1.0, note: n});
+                        if(currentMode==='RECORDING') recording.push({n, t: Date.now()-startTime});
                         fingerStates[`${side}_${id}`] = true;
-                    }
-                } else { fingerStates[`${side}_${id}`] = false; }
-            });
+                    } else if(!bent) fingerStates[`${side}_${id}`] = false;
+                    ctx.fillStyle = bent ? "var(--neon)" : "white";
+                    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
+                });
+            }
         });
         if(rf && lf) bf = true;
     }
 
-    // --- LOGIC STATES & 7s COUNTDOWN ---
-    const now = Date.now(), box = document.getElementById('countdown-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg');
+    // --- LOGIC STATES & VLC HUD ---
+    const now = Date.now(), box = document.getElementById('countdown'), val = document.getElementById('timer-val'), msg = document.getElementById('t-msg');
+    
+    if(currentMode === 'PLAY' && recording.length > 0) {
+        document.getElementById('playback-hud').classList.remove('hidden');
+        const totalTime = recording[recording.length-1].t + 1000;
+        const progress = ((now - startTime) / totalTime) * 100;
+        document.getElementById('progress-fill').style.width = Math.min(progress, 100) + "%";
+    } else { document.getElementById('playback-hud').classList.add('hidden'); }
 
     if(rf && !lf) {
         if(!rFistStart) rFistStart = now;
         let elap = Math.floor((now-rFistStart)/1000);
-        box.classList.remove('hidden'); val.innerText = 3-elap; msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
-        val.style.color = currentMode==='RECORDING' ? "var(--stop)" : "var(--rec)";
-        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING') { recording=[]; startTime=now;} rFistStart=now+5000; box.classList.add('hidden'); }
-    } else if(results.multiHandLandmarks?.length === 2 && bo && currentMode==='STOP') {
-        if(!saveStart) saveStart = now;
-        let elap = Math.floor((now-saveStart)/1000);
-        box.classList.remove('hidden'); val.innerText = 7-elap; msg.innerText = "SAVING"; val.style.color = "var(--neon)";
-        if(elap >= 7) { library.push({data: [...recording], dur: recording[recording.length-1].time}); saveStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
-    } else { rFistStart = saveStart = 0; box.classList.add('hidden'); }
-
+        box.classList.remove('hidden'); val.innerText = 3-elap; msg.innerText = "RECORDING";
+        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING'){recording=[]; startTime=now;} rFistStart=now+5000; box.classList.add('hidden'); }
+    } else if(lf && !rf && currentMode === 'STOP') {
+        if(!lFistStart) lFistStart = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistStart)/1000); msg.innerText = "PLAYING";
+        if(now-lFistStart >= 3000) { currentMode='PLAY'; startTime=now; box.classList.add('hidden'); recording.forEach(e=>setTimeout(()=>synth.triggerAttackRelease(e.n,"4n"), e.t)); setTimeout(()=>currentMode='STOP', recording[recording.length-1].t+1000); lFistStart=now+5000; }
+    } else if(bo && currentMode === 'STOP' && results.multiHandLandmarks?.length === 2) {
+        if(!bothOpenStart) bothOpenStart = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-bothOpenStart)/1000); msg.innerText = "SAVING";
+        if(now-bothOpenStart >= 3000) { library.push({name: "Tune_"+Date.now(), data: [...recording]}); bothOpenStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'), 1000); }
+    } else { rFistStart=lFistStart=bothOpenStart=0; box.classList.add('hidden'); }
     ctx.restore();
 }
 
 function renderLibrary() {
-    const cont = document.getElementById('library-content');
-    cont.innerHTML = "<h3>SAVED TUNES</h3>";
-    library.forEach((t, i) => {
-        cont.innerHTML += `<div class="vlc-container">
+    const lib = document.getElementById('lib-list');
+    if(library.length === 0) return;
+    lib.innerHTML = library.map((t, i) => `
+        <div class="vlc-style">
             <span>Tune #${i+1}</span>
-            <input type="range" class="vlc-seek" min="0" max="${t.dur}" value="0" oninput="seekTune(${i}, this.value)">
-            <button class="btn" onclick="playLib(${i})">PLAY</button>
-        </div>`;
-    });
+            <input type="range" min="0" max="100" value="0" id="scrub-${i}">
+            <button class="btn" style="padding:5px" onclick="playStored(${i})">PLAY</button>
+        </div>
+    `).join('');
 }
 
-function playLib(i) {
-    const tune = library[i].data;
-    tune.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time));
+function playStored(idx) {
+    const tune = library[idx].data;
+    tune.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.n, "4n"), e.t));
 }
 
 const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
