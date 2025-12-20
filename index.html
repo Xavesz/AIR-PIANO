@@ -7,101 +7,91 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;700&family=Montserrat:wght@100;200&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; --glass: rgba(255, 255, 255, 0.02); }
+        :root { --accent: #00f2ff; --gold: #ffd700; --bg: #020205; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
-        /* The Premium Supernova Interface */
+        /* Cinematic Pro UI */
         .ui-layer { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             background: radial-gradient(circle at center, #0a1a3a 0%, #000 100%); 
-            transition: 1.5s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
+            transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
         }
-        .hidden { opacity: 0 !important; pointer-events: none; filter: blur(40px); transform: scale(1.1); }
+        .hidden { opacity: 0 !important; pointer-events: none; filter: blur(30px); transform: scale(1.1); }
 
-        /* Multi-Layer Pulsating Aura */
-        .aura-layer {
-            position: absolute; width: 500px; height: 500px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,242,255,0.15) 0%, transparent 70%);
-            animation: aura-pulse 5s ease-in-out infinite; pointer-events: none;
+        /* Pulsating Deep Glow */
+        .main-aura {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(0,242,255,0.05) 0%, transparent 70%);
+            animation: pulse-glow 8s ease-in-out infinite; pointer-events: none;
         }
-        @keyframes aura-pulse { 0%, 100% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(1.4); opacity: 0.4; } }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.5; } }
 
-        /* Main Glass Command Panel */
-        .glass-shell {
-            position: relative; padding: 60px; border-radius: 4px;
-            background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(50px); max-width: 650px; width: 85%;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
-        }
-
-        /* Typography Mastery */
-        .main-title { 
-            font-family: 'Montserrat', sans-serif; font-size: clamp(2rem, 8vw, 3rem); 
-            letter-spacing: 25px; font-weight: 100; text-transform: uppercase; margin: 0;
-            background: linear-gradient(to bottom, #fff 0%, #777 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .author-name { 
-            font-size: 0.7rem; color: var(--divine); letter-spacing: 12px; 
-            margin: 20px 0 45px; text-transform: uppercase; font-weight: 300;
-            text-shadow: 0 0 15px rgba(0,242,255,0.5);
+        .pro-card {
+            position: relative; padding: 40px; border-radius: 2px;
+            background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(40px); max-width: 550px; width: 85%;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.9);
         }
 
-        .btn-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 40px; }
-        .btn-pro { 
-            padding: 16px 45px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); 
-            color: white; border-radius: 2px; cursor: pointer; font-size: 0.75rem; 
-            letter-spacing: 4px; text-transform: uppercase; transition: 0.5s;
-        }
-        .btn-pro:hover { border-color: var(--divine); background: rgba(0,242,255,0.1); box-shadow: 0 0 40px rgba(0,242,255,0.2); }
-        .btn-gold-pro { border-color: rgba(255,215,0,0.3); color: var(--gold); }
-        .btn-gold-pro:hover { border-color: var(--gold); background: rgba(255,215,0,0.1); }
+        .main-title { font-size: clamp(1.5rem, 8vw, 2.5rem); letter-spacing: 20px; font-weight: 100; text-transform: uppercase; margin: 0; color: #fff; }
+        .designer-tag { font-size: 0.65rem; color: var(--accent); letter-spacing: 8px; margin: 20px 0 40px; text-transform: uppercase; font-weight: 400; }
 
-        /* Advanced Safety Framework */
-        .legal-framework { text-align: left; font-size: 0.75rem; color: #555; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; }
-        .safety-tag { color: var(--divine); font-weight: bold; font-size: 0.6rem; letter-spacing: 3px; display: block; margin-bottom: 12px; }
+        .btn-group { display: flex; gap: 15px; justify-content: center; margin-bottom: 35px; }
+        .btn-main { 
+            padding: 14px 35px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02); 
+            color: white; border-radius: 2px; cursor: pointer; font-size: 0.7rem; 
+            letter-spacing: 3px; text-transform: uppercase; transition: 0.4s;
+        }
+        .btn-main:hover { border-color: var(--accent); background: rgba(0,242,255,0.1); box-shadow: 0 0 30px rgba(0,242,255,0.2); }
+        .btn-gold { border-color: rgba(255,215,0,0.3); color: var(--gold); }
+
+        /* Beginner-Friendly Legal & Info */
+        .info-panel { text-align: left; font-size: 0.75rem; color: #555; line-height: 1.8; border-top: 1px solid #111; padding-top: 25px; }
+        .info-title { color: var(--accent); font-weight: bold; font-size: 0.6rem; letter-spacing: 2px; display: block; margin-bottom: 10px; }
         
-        .action-tray { display: flex; gap: 30px; margin-top: 25px; font-size: 0.65rem; color: #333; letter-spacing: 1px; }
-        .action-tray span:hover { color: #fff; cursor: pointer; }
+        .feedback-link { color: #fff; text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .feedback-link:hover { color: var(--accent); }
 
-        #hud { position: absolute; top: 35px; width: 100%; display: flex; justify-content: space-around; z-index: 1100; pointer-events: none; }
-        .hud-display { background: rgba(0,0,0,0.8); padding: 10px 30px; border-left: 2px solid var(--divine); font-size: 0.65rem; letter-spacing: 3px; }
+        /* The Active HUD - Visual Response */
+        #stage-hud { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-around; z-index: 1100; pointer-events: none; }
+        .zone-indicator { 
+            background: rgba(0,0,0,0.8); padding: 10px 25px; border: 1px solid rgba(255,255,255,0.05); 
+            font-size: 0.6rem; letter-spacing: 3px; color: #444; transition: 0.3s;
+        }
+        .zone-active { color: #fff; border-color: #fff; background: rgba(255,255,255,0.1); box-shadow: 0 0 20px rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <div class="aura-layer"></div>
-        <div class="glass-shell">
+        <div class="main-aura"></div>
+        <div class="pro-card">
             <h1 class="main-title">QUANTUM SOUL</h1>
-            <div class="author-name">ENGINEERED BY PRASURJYA DEKA</div>
+            <div class="designer-tag">DESIGNED BY PRASURJYA DEKA</div>
             
-            <div class="btn-row">
-                <button class="btn-pro btn-gold-pro" onclick="startApp('MYTHIC')">Mythic Branch</button>
-                <button class="btn-pro" onclick="startApp('SOUL')">Soul Branch</button>
+            <div class="btn-group">
+                <button class="btn-main btn-gold" onclick="startApp('MYTHIC')">Mythic Branch</button>
+                <button class="btn-main" onclick="startApp('SOUL')">Soul Branch</button>
             </div>
 
-            <div class="legal-framework">
-                <span class="safety-tag">SECURE EDGE COMPUTING PROTOCOL</span>
-                Operating strictly via <b>Browser-Side Inference</b>. Biometric hand landmarks are processed in volatile memory (RAM). No video stream or personal data is captured, stored, or transmitted. 100% compliant with digital privacy sovereignty.
-                
-                <div class="action-tray">
-                    <span onclick="sendFeedback()">Submit Feedback</span>
-                    <span>|</span>
-                    <span style="cursor:default">Status: Encrypted Local</span>
-                </div>
+            <div class="info-panel">
+                <span class="info-title">OPERATIONAL PROTOCOL (BEGINNER FRIENDLY)</span>
+                • <b>Left Hand:</b> Controls the <b>LOW PITCH</b> (Thumping / Bass).<br>
+                • <b>Right Hand:</b> Controls the <b>HIGH PITCH</b> (Twinkling / Melody).<br>
+                • <b>Safety:</b> This is 100% private. Video stays on your device and is never saved.<br><br>
+                Would you like to help? <span class="feedback-link" onclick="sendFeedback()">Submit Feedback</span>
             </div>
         </div>
     </div>
 
-    <div id="hud" class="hidden">
-        <div class="hud-display" id="l-hud">BASS_ZONE</div>
-        <button class="btn-pro" style="padding: 6px 20px; font-size: 0.5rem; margin:0; pointer-events:auto; border-radius: 50px;" onclick="location.reload()">TERMINATE</button>
-        <div class="hud-display" style="border-left-color: var(--gold);" id="r-hud">TREBLE_ZONE</div>
+    <div id="stage-hud" class="hidden">
+        <div class="zone-indicator" id="l-zone">LOW PITCH</div>
+        <button class="btn-main" style="padding: 5px 15px; font-size: 0.5rem; margin:0; pointer-events:auto; border-radius: 50px;" onclick="location.reload()">EXIT STAGE</button>
+        <div class="zone-indicator" id="r-zone">HIGH PITCH</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
@@ -114,12 +104,12 @@ const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
 function createMeteor() {
-    if (meteors.length < 6 && Math.random() < 0.04) {
+    if (meteors.length < 5 && Math.random() < 0.03) {
         meteors.push({
             x: Math.random() * canvas.width,
-            y: Math.random() * (canvas.height / 3),
-            v: Math.random() * 14 + 10,
-            len: Math.random() * 90 + 50,
+            y: Math.random() * (canvas.height/2),
+            v: Math.random() * 12 + 10,
+            len: Math.random() * 60 + 40,
             life: 1.0
         });
     }
@@ -132,47 +122,54 @@ async function startApp(branch) {
         maxPolyphony: 24,
         harmonicity: branch === 'MYTHIC' ? 6 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.25, decay: 0.4, sustain: 0.3, release: 3.5 }
+        envelope: { attack: 0.2, release: 3.5 }
     }).connect(reverb);
 
     document.getElementById('menu').classList.add('hidden');
-    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('stage-hud').classList.remove('hidden');
     isLive = true;
     init();
 }
 
 async function sendFeedback() {
-    const msg = prompt("Direct feedback for Prasurjya Deka:");
+    const msg = prompt("Submit feedback directly to Prasurjya Deka (White color text link active):");
     if (!msg) return;
     try {
         await fetch("https://formspree.io/f/mykgkorl", {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ developer: "Prasurjya Deka", message: msg })
+            body: JSON.stringify({ designer: "Prasurjya Deka", message: msg })
         });
-        alert("Resonance Transmitted.");
-    } catch(e) { console.error("Network Refused"); }
+        alert("Feedback transmitted successfully.");
+    } catch(e) { console.error("Network Error"); }
 }
 
 function onResults(results) {
     if(!isLive) return;
+    
+    // Smooth trails
     ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Meteors
     createMeteor();
     meteors.forEach((m, i) => {
-        m.x -= m.v; m.y += m.v; m.life -= 0.04; 
-        if(m.life <= 0) meteors.splice(i, 1);
+        m.x -= m.v; m.y += m.v; m.life -= 0.04;
+        if (m.life <= 0) meteors.splice(i, 1);
         ctx.strokeStyle = `rgba(255, 255, 255, ${m.life})`;
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x + m.len, m.y - m.len); ctx.stroke();
     });
 
+    // Reset Visual Indicators
+    document.getElementById('l-zone').classList.remove('zone-active');
+    document.getElementById('r-zone').classList.remove('zone-active');
+
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const side = results.multiHandedness[i].label;
-            const hudId = side === 'Left' ? 'l-hud' : 'r-hud';
-            document.getElementById(hudId).style.color = "white";
+            const side = results.multiHandedness[i].label; // Left/Right
+            const hudId = side === 'Left' ? 'l-zone' : 'r-zone';
+            document.getElementById(hudId).classList.add('zone-active');
 
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
@@ -185,9 +182,9 @@ function onResults(results) {
                     const note = scale[Math.min(zone, 11)];
 
                     if(lastNotes[fingerKey] !== note) {
-                        synth.triggerAttackRelease(note, "4n", undefined, 0.4);
+                        synth.triggerAttackRelease(note, "4n", undefined, 0.35);
                         lastNotes[fingerKey] = note;
-                        if(sparkles.length < 40) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
+                        if(sparkles.length < 30) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
                     ctx.fillStyle = "#fff";
                     ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 3, 0, Math.PI*2); ctx.fill();
@@ -196,6 +193,7 @@ function onResults(results) {
         });
     }
 
+    // Glitter
     for (let i = sparkles.length - 1; i >= 0; i--) {
         let s = sparkles[i]; s.l -= 0.06;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
