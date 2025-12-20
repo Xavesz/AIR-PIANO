@@ -3,269 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro | Ultimate Stage</title>
+    <title>Air Piano Quantum | Angelic Synthesis</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --stop: #ffa500; }
-        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        :root { --quantum: #bf00ff; --angelic: #00f2ff; --bg: #050510; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
         
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a2e 0%, #000 100%); z-index: 1000; transition: all 0.5s; }
+        /* GUI Layers */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); z-index: 1000; transition: opacity 0.5s ease; }
         .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
         
-        .btn { padding: 14px 30px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 8px; font-weight: bold; margin: 10px; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
-        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 30px var(--neon); }
-        
-        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 25px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
-        #side-dash { position: absolute; top: 120px; left: 25px; width: 260px; background: rgba(0,0,20,0.7); backdrop-filter: blur(10px); border-left: 4px solid var(--neon); padding: 20px; z-index: 500; border-radius: 4px; box-shadow: 10px 10px 30px rgba(0,0,0,0.5); }
+        .btn { padding: 18px 40px; border: 1px solid var(--angelic); background: transparent; color: var(--angelic); cursor: pointer; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; transition: 0.3s; box-shadow: 0 0 15px rgba(0,242,255,0.2); }
+        .btn:hover { background: var(--angelic); color: #000; box-shadow: 0 0 40px var(--angelic); }
 
-        #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; text-align: center; }
-        .progress-ring { width: 260px; height: 260px; transform: rotate(-90deg); filter: drop-shadow(0 0 15px var(--play)); }
-        .progress-ring circle { fill: none; stroke-width: 12; stroke-linecap: round; stroke: var(--play); stroke-dasharray: 628; stroke-dashoffset: 628; }
-
-        .pane { background: #0a0a0a; padding: 40px; border-radius: 15px; width: 85%; max-height: 75%; overflow-y: auto; border: 1px solid #333; }
-        .row { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; border-bottom: 1px solid #222; padding-bottom: 15px; }
-        .key-scroll { height: 110px; overflow-y: auto; border: 1px solid #444; padding: 8px; background: #000; border-radius: 6px; width: 140px; }
-        .key-option { padding: 8px; cursor: pointer; border-radius: 4px; }
-        .key-option.selected { background: var(--neon); color: #000; }
+        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 25px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border-bottom: 1px solid rgba(191,0,255,0.2); }
         
-        #hand-count-pill { font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 4px; margin-top: 5px; color: #aaa; }
+        #midi-stream { position: absolute; top: 110px; left: 25px; width: 220px; font-family: 'Courier New', monospace; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 15px; border-left: 2px solid var(--quantum); border-radius: 4px; pointer-events: none; z-index: 500; }
+
+        .manual-card { background: rgba(255,255,255,0.03); padding: 25px; border-radius: 15px; border: 1px solid #333; margin: 20px; max-width: 400px; text-align: left; line-height: 1.6; }
+        .manual-card b { color: var(--angelic); }
+        
+        #loading-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; pointer-events: none; display: none; }
+        .spinner { width: 100px; height: 100px; border: 3px solid transparent; border-top-color: var(--quantum); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 3.5rem; letter-spacing: 15px;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
-        <button class="btn" style="background:var(--play); color:#000" onclick="launchPerformance()">Launch Stage</button>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" onclick="showPane('settings')">Mixer</button>
-            <button class="btn" onclick="showPane('library')">Library</button>
+        <h1 style="font-size: 3rem; letter-spacing: 12px; margin-bottom: 0;">QUANTUM <span style="color:var(--angelic)">AIR</span></h1>
+        <div class="manual-card">
+            <b>HOW TO PLAY:</b><br>
+            • 🖐 <b>Play:</b> Move fingers. Wave-like motions create angelic resonance.<br>
+            • ✊ <b>Mute:</b> Clench fist to silence the quantum stream.<br>
+            • 🔁 <b>Reset:</b> Both fists for 3s clears all audio echoes.<br>
+            • ⚙️ <b>Tip:</b> Best used in well-lit areas.
         </div>
-    </div>
-
-    <div id="menu-settings" class="ui-layer hidden">
-        <div class="pane">
-            <h2>STUDIO MIXER</h2>
-            <div style="margin-bottom: 20px;"><label>LEFT-HAND MODE </label><input type="checkbox" id="leftHandMode" onchange="isLeftMode = this.checked"></div>
-            <div id="mixer-content"></div>
-        </div>
-        <button class="btn" onclick="showPane('main')">Save</button>
-    </div>
-
-    <div id="menu-library" class="ui-layer hidden">
-        <div class="pane"><h2 style="color:var(--play)">LIBRARY</h2><div id="library-content"></div></div>
-        <button class="btn" onclick="showPane('main')">Back</button>
+        <button class="btn" onclick="initStage()">ACTIVATE STAGE</button>
     </div>
 
     <div id="hud-top" class="hidden">
-        <button class="btn" style="margin:0; padding: 8px 15px; border-color: #ff3333; color:#ff3333;" onclick="backToMenu()">QUIT</button>
-        <div style="text-align: right;">
-            <div id="mode-pill" style="border: 2px solid var(--neon); padding: 5px 20px; color: var(--neon); border-radius: 20px;">PERFORM</div>
-            <div id="hand-count-pill">HANDS DETECTED: 0</div>
+        <button class="btn" style="padding: 10px 20px; font-size: 0.7rem;" onclick="location.reload()">TERMINATE</button>
+        <div style="text-align: right">
+            <div id="mode-text" style="color: var(--angelic); font-weight: bold; letter-spacing: 2px;">ANGELIC MODE</div>
+            <div id="hand-stat" style="font-size: 0.7rem; color: #666;">COHERENCE: 0%</div>
         </div>
-        <div id="rec-timer" style="color: var(--rec); font-family: monospace; font-size: 1.8rem;">00:00</div>
     </div>
 
-    <div id="side-dash" class="hidden">
-        <div style="color: var(--neon); font-size: 0.7rem; margin-bottom: 10px; font-weight: bold;">LIVE MIDI STREAM</div>
-        <div id="live-notes" style="font-family: monospace; line-height: 1.6;">Waiting for hands...</div>
-    </div>
-
-    <div id="countdown-box" class="hidden">
-        <svg class="progress-ring" viewBox="0 0 210 210"><circle id="ring-circle" cx="105" cy="105" r="100"></circle></svg>
-        <div id="timer-msg" style="margin-top: 20px; font-weight: bold;">STATUS</div>
-        <div id="timer-val" style="font-size: 5rem; font-weight: 900;"></div>
+    <div id="midi-stream" class="hidden">
+        <div style="opacity: 0.5; margin-bottom: 5px;">QUANTUM DATA:</div>
+        <div id="live-data">Waiting for detection...</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], library = [], isLive = false, currentMode = 'PERFORM', isLeftMode = false;
-let rFistStart = 0, lFistStart = 0, bothFistStart = 0, bothOpenStart = 0, startTime = 0;
-let playbackTimeouts = [];
-const notes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-let fingerVols = Array(10).fill(-6), fingerNotes = [...notes.slice(0,10)];
-const fingerNames = ["Pinky", "Ring", "Middle", "Index", "Thumb"];
+let synth, isLive = false;
+let startTime = 0, bothFistStart = 0;
+const notes = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5','B5','C6'];
 let fingerStates = {}, ripples = [];
 
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-async function ensureAudio() { if (!synth) { await Tone.start(); synth = new Tone.PolySynth(Tone.Synth).toDestination(); } }
+// ANGELIC QUANTUM SYNTH ENGINE
+async function initStage() {
+    await Tone.start();
+    // Custom FMSynth: Harmonic, Bell-like, and Quantum-shimmer
+    synth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 3.5,
+        modulationIndex: 10,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.2, decay: 0.3, sustain: 0.4, release: 1.2 },
+        modulation: { type: "triangle" },
+        modulationEnvelope: { attack: 0.5, decay: 0 }
+    }).toDestination();
+    
+    // Add Reverb for "Angelic" feel
+    const reverb = new Tone.Reverb(3).toDestination();
+    synth.connect(reverb);
 
-async function launchPerformance() {
-    await ensureAudio();
     document.getElementById('menu-main').classList.add('hidden');
-    document.querySelectorAll('#hud-top, #side-dash').forEach(el => el.classList.remove('hidden'));
-    isLive = true; startCamera();
+    document.getElementById('hud-top').classList.remove('hidden');
+    document.getElementById('midi-stream').classList.remove('hidden');
+    
+    isLive = true;
+    startCamera();
 }
-
-function showPane(pane) {
-    document.querySelectorAll('.ui-layer').forEach(l => l.classList.add('hidden'));
-    document.getElementById(`menu-${pane}`).classList.remove('hidden');
-    if(pane === 'library') renderLibrary();
-}
-
-function backToMenu() { location.reload(); }
-
-const mixer = document.getElementById('mixer-content');
-['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((name, i) => {
-    mixer.innerHTML += `<div class="row"><span>${name}</span><input type="range" min="-30" max="0" value="-6" onchange="fingerVols[${i}]=this.value"><div class="key-scroll">${notes.map(n => `<div class="key-option ${n==fingerNotes[i]?'selected':''}" onclick="updateFingerNote(${i},'${n}',this)">${n}</div>`).join('')}</div><button class="btn" style="padding:8px" onclick="testNote(${i})">🔊</button></div>`;
-});
-
-async function updateFingerNote(idx, note, el) {
-    await ensureAudio();
-    fingerNotes[idx] = note;
-    el.parentNode.querySelectorAll('.key-option').forEach(opt => opt.classList.remove('selected'));
-    el.classList.add('selected');
-    testNote(idx);
-}
-
-async function testNote(i) { await ensureAudio(); synth.triggerAttackRelease(fingerNotes[i], "8n", undefined, Tone.dbToGain(fingerVols[i])); }
-
-function isClenched(lm) { return Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.14; }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Ripple Effect
+    // Smooth Visualizer Ripples
     ripples.forEach((r, i) => {
-        r.rad += 4; r.alpha -= 0.02;
-        ctx.strokeStyle = `hsla(${r.hue}, 100%, 70%, ${r.alpha})`;
-        ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        r.rad += 3; r.alpha -= 0.015;
+        ctx.strokeStyle = `rgba(191,0,255,${r.alpha})`;
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
         if(r.alpha <= 0) ripples.splice(i, 1);
     });
 
-    let rf = false, lf = false, bo = false, bf = false, streamHTML = "", anyFist = false;
     let handCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-    document.getElementById('hand-count-pill').innerText = `HANDS DETECTED: ${handCount}`;
+    document.getElementById('hand-stat').innerText = `COHERENCE: ${handCount * 50}%`;
+
+    let dataHTML = "";
+    let anyFist = false;
+    let rf = false, lf = false;
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            // FIX: Hand labeling relative to mirrored video
-            let label = results.multiHandedness[i].label;
-            let side = label === "Left" ? "Right" : "Left"; 
-            const clench = isClenched(lm);
-            if(clench) anyFist = true;
-            const open = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) > 0.45;
-            
-            if(clench) { if(side === "Right") rf = true; else lf = true; }
-            if(open) bo = true;
+            const label = results.multiHandedness[i].label; // Left/Right
+            const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.13;
+            if(isFist) { 
+                anyFist = true; 
+                if(label === "Left") lf = true; else rf = true;
+            }
 
-            [20, 16, 12, 8, 4].forEach((id, fIdx) => {
+            // Finger Tracking
+            [8, 12, 16, 20].forEach((id, fIdx) => {
                 const tip = lm[id];
                 const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
-                const isBent = tip.y > lm[id-1].y;
-                
-                if(isBent && !anyFist && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                    const noteIdx = Math.floor((1-tip.x) * (notes.length-1));
-                    const note = notes[noteIdx];
+                const active = tip.y > lm[id-1].y; // Natural finger bend trigger
+
+                if(active && !anyFist) {
+                    const nIdx = Math.floor((1-tip.x) * (notes.length-1));
+                    const note = notes[nIdx];
                     
-                    // Display MIDI Stream Logic
-                    streamHTML += `<div style="color:var(--neon)">[${side}] ${fingerNames[fIdx]}: <span style="color:white">${note}</span></div>`;
-                    
-                    if(!fingerStates[`${side}_${id}`]) {
-                        synth.triggerAttackRelease(note, "4n", undefined, Tone.dbToGain(fingerVols[fIdx + (side==='Right'?5:0)]));
-                        ripples.push({x, y, rad: 5, alpha: 1.0, hue: noteIdx*24});
-                        if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
-                        fingerStates[`${side}_${id}`] = true;
+                    dataHTML += `<div style="color:var(--angelic)">${label} Quantum → ${note}</div>`;
+
+                    if(!fingerStates[`${label}_${id}`]) {
+                        synth.triggerAttackRelease(note, "2n", undefined, 0.5);
+                        ripples.push({x, y, rad: 5, alpha: 0.8, hue: nIdx*20});
+                        fingerStates[`${label}_${id}`] = true;
                     }
-                } else { fingerStates[`${side}_${id}`] = false; }
+                } else { fingerStates[`${label}_${id}`] = false; }
                 
-                ctx.fillStyle = isBent ? "var(--play)" : "white";
-                ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
+                // Draw Quantum Particle
+                ctx.fillStyle = active ? "var(--angelic)" : "white";
+                ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
             });
         });
-        if(rf && lf) bf = true;
-    }
 
-    const now = Date.now(), box = document.getElementById('countdown-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg'), circle = document.getElementById('ring-circle');
-    let recH = isLeftMode ? lf : rf, playH = isLeftMode ? rf : lf;
-
-    if(currentMode === 'RECORDING') {
-        let s = Math.floor((now-startTime)/1000);
-        document.getElementById('rec-timer').innerText = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+        // Both Fists Reset Logic
+        if(rf && lf) {
+            if(!bothFistStart) bothFistStart = Date.now();
+            if(Date.now() - bothFistStart > 3000) {
+                synth.releaseAll();
+                bothFistStart = Date.now() + 5000;
+                document.getElementById('mode-text').innerText = "SYSTEM RESET";
+                setTimeout(() => document.getElementById('mode-text').innerText = "ANGELIC MODE", 1000);
+            }
+        } else { bothFistStart = 0; }
     }
-
-    // Gesture Logic
-    if(recH && !playH && currentMode !== 'PLAYING') {
-        if(!rFistStart) rFistStart = now;
-        let elap = Math.floor((now-rFistStart)/1000);
-        box.classList.remove('hidden'); circle.parentElement.style.display="none";
-        val.innerText = 3-elap; msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
-        if(elap >= 3) {
-            currentMode = currentMode==='RECORDING'?'STOP':'RECORDING';
-            if(currentMode==='RECORDING') { recording=[]; startTime=now; }
-            rFistStart=now+2000; box.classList.add('hidden');
-        }
-    } else if(playH && !recH && currentMode==='STOP' && recording.length > 0) {
-        if(!lFistStart) lFistStart = now;
-        box.classList.remove('hidden'); circle.parentElement.style.display="none";
-        val.innerText = 3-Math.floor((now-lFistStart)/1000); msg.innerText = "STARTING";
-        if(now-lFistStart >= 3000) {
-            currentMode='PLAYING'; val.innerText = ""; msg.innerText = "PLAYING";
-            circle.parentElement.style.display="block";
-            let total = recording[recording.length-1].time;
-            recording.forEach(e => {
-                let t = setTimeout(() => {
-                    synth.triggerAttackRelease(e.note,"4n");
-                    circle.style.strokeDashoffset = 628 - (e.time/total * 628);
-                }, e.time);
-                playbackTimeouts.push(t);
-            });
-            setTimeout(() => { currentMode='STOP'; box.classList.add('hidden'); renderLibrary(); }, total + 500);
-            lFistStart=now+2000;
-        }
-    } else if(bf) {
-        if(!bothFistStart) bothFistStart = now;
-        box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothFistStart)/1000);
-        msg.innerText = "WIPING";
-        if(now-bothFistStart >= 5000) { recording=[]; currentMode='PERFORM'; bothFistStart=now+2000; box.classList.add('hidden'); }
-    } else if(bo && currentMode==='STOP' && recording.length > 0) {
-        if(!bothOpenStart) bothOpenStart = now;
-        box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothOpenStart)/1000);
-        msg.innerText = "SAVING";
-        if(now-bothOpenStart >= 5000) {
-            library.push({name: "Session_"+new Date().toLocaleTimeString(), data: [...recording]});
-            bothOpenStart=now+2000; val.innerText="SAVED";
-            setTimeout(() => { box.classList.add('hidden'); renderLibrary(); }, 1000);
-        }
-    } else if(currentMode !== 'PLAYING') {
-        rFistStart = lFistStart = bothFistStart = bothOpenStart = 0;
-        box.classList.add('hidden');
-    }
-    document.getElementById('mode-pill').innerText = currentMode;
-    document.getElementById('live-notes').innerHTML = streamHTML || "Waiting for hands...";
+    document.getElementById('live-data').innerHTML = dataHTML || "Listening...";
 }
 
-function renderLibrary() {
-    const lib = document.getElementById('library-content');
-    if(library.length === 0) { lib.innerHTML = "<p>Empty Library</p>"; return; }
-    lib.innerHTML = library.map((t, i) => `
-        <div class="row">
-            <span>${t.name}</span>
-            <div style="display:flex; gap:5px;">
-                <button class="btn" style="padding:5px 10px" onclick="playLib(${i})">PLAY</button>
-                <button class="btn" style="padding:5px 10px" onclick="downloadSession(${i})">FILE</button>
-            </div>
-        </div>`).join('');
-}
-
-function playLib(i) { library[i].data.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time)); }
-function downloadSession(i) {
-    const blob = new Blob([JSON.stringify(library[i].data)], {type: 'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${library[i].name}.json`; a.click();
-}
-
+// Low-Latency Camera Loop
 const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-handTracker.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
+handTracker.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
 handTracker.onResults(onResults);
-function startCamera() { new Camera(video, { onFrame: async () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; await handTracker.send({image: video}); }, width: 1280, height: 720 }).start(); }
+
+function startCamera() {
+    new Camera(video, {
+        onFrame: async () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            await handTracker.send({image: video});
+        },
+        width: 1280, height: 720
+    }).start();
+}
 </script>
 </body>
 </html>
