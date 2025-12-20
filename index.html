@@ -11,55 +11,64 @@
         :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
         
-        /* Mirror Control via CSS Variable */
         #output_canvas, #input_video { transform: scaleX(var(--mirror, -1)); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
         
         .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 0.5s; text-align: center; backdrop-filter: blur(10px); }
         .hidden { display: none !important; }
         
-        .brand-header { font-size: clamp(2rem, 8vw, 3.5rem); letter-spacing: 15px; margin: 0; font-weight: 200; }
-        .btn { padding: 12px 35px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin: 8px; font-size: 0.7rem; transition: 0.3s; }
+        .brand-header { font-size: clamp(2rem, 8vw, 3rem); letter-spacing: 15px; margin: 0; font-weight: 200; }
+        .btn { padding: 12px 30px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 5px; font-size: 0.65rem; transition: 0.3s; }
         .btn:hover { border-color: var(--divine); background: rgba(0,242,255,0.1); }
-        .btn.active { background: var(--divine); color: black; border-color: var(--divine); }
 
-        #manual { max-width: 500px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin: 20px 0; font-size: 0.8rem; line-height: 1.6; text-align: left; }
-        .pitch-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; font-size: 0.6rem; color: #888; text-align: center; }
-        .pitch-map div { border: 1px solid #333; padding: 5px; }
-        
-        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.7rem; color: #444; }
+        /* Neural HUD */
+        #neural-hud { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 1100; pointer-events: none; }
+        .hud-card { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(0,242,255,0.2); font-size: 0.6rem; letter-spacing: 1px; min-width: 100px; }
+        .active-hand { color: var(--divine); text-shadow: 0 0 10px var(--divine); }
+
+        /* Pitch Visualizer Bar */
+        #pitch-guide { position: absolute; top: 0; left: 0; width: 100%; height: 4px; display: flex; z-index: 1100; opacity: 0.5; }
+        .p-zone { flex: 1; border-right: 1px solid rgba(255,255,255,0.1); }
+
+        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.6rem; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
         <h1 class="brand-header">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.7rem; color: #555; letter-spacing: 5px; margin-top: 5px;">BY PRASURJYA DEKA</div>
+        <div style="font-size: 0.6rem; color: #555; letter-spacing: 5px; margin-top: 5px;">BY PRASURJYA DEKA</div>
         
-        <div id="manual">
-            <b style="color:var(--gold);">PITCH & PERFORMANCE MANUAL:</b><br>
-            • 🎹 <b>X-Axis:</b> Left screen = Low Frequency | Right screen = High Frequency.<br>
-            • 🖐 <b>Touch:</b> Extend fingers to "pluck" the neural strings.<br>
-            • ✊ <b>Reset:</b> A closed fist acts as an emergency audio gate.<br>
-            <div class="pitch-map">
-                <div>BASS (Left)</div><div>MID (Center)</div><div>TREBLE (Right)</div>
+        <div style="margin: 30px 0; max-width: 400px; font-size: 0.8rem; color: #aaa;">
+            <p>Neural hand-tracking active. High pitches are mapped to the <b>Right</b>, deep resonances to the <b>Left</b>.</p>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button class="btn" id="mBtn" onclick="toggleMirror()">Mirror: ON</button>
+                <button class="btn" id="lBtn" onclick="toggleLefty()">Lefty: OFF</button>
             </div>
-            <br>
-            <b>CUSTOMIZE ORIENTATION:</b><br>
-            <button class="btn" id="leftyBtn" onclick="toggleLefty()">Left-Handed: OFF</button>
-            <button class="btn" id="mirrorBtn" onclick="toggleMirror()">Mirror: ON</button>
         </div>
 
         <div>
-            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="startApp('CRYSTAL')">Crystal Mode</button>
-            <button class="btn" onclick="startApp('SOUL')">Soul Mode</button>
+            <button class="btn" style="border-color:var(--gold); color:var(--gold); font-size: 0.9rem;" onclick="startApp('CRYSTAL')">Launch Crystal</button>
+            <button class="btn" style="font-size: 0.9rem;" onclick="startApp('SOUL')">Launch Soul</button>
         </div>
     </div>
 
-    <div id="hud" class="hidden" style="position:absolute; top:25px; left:25px; z-index:1000;">
-        <button class="btn" onclick="location.reload()">EXIT</button>
+    <div id="pitch-guide" class="hidden">
+        <div class="p-zone" style="background: #1a0000;">BASS</div>
+        <div class="p-zone" style="background: #001a1a;">MID</div>
+        <div class="p-zone" style="background: #00001a;">TREBLE</div>
     </div>
 
-    <footer>© 2025 PRASURJYA DEKA | 100% SECURE LOCAL INFERENCE</footer>
+    <div id="neural-hud" class="hidden">
+        <div class="hud-card" id="hand-count">HANDS: 0</div>
+        <div class="hud-card" id="hand-type">MODE: STANDBY</div>
+        <div class="hud-card" id="pitch-data">FREQ: ---</div>
+    </div>
+
+    <div id="exit-btn" class="hidden" style="position:absolute; top:20px; left:20px; z-index:1200;">
+        <button class="btn" onclick="location.reload()">TERMINATE</button>
+    </div>
+
+    <footer>© 2025 PRASURJYA DEKA | LOCAL NEURAL PROCESSING</footer>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" playsinline style="display:none"></video>
@@ -75,26 +84,28 @@ const video = document.getElementById('input_video');
 function toggleMirror() {
     isMirrored = !isMirrored;
     document.body.style.setProperty('--mirror', isMirrored ? "-1" : "1");
-    document.getElementById('mirrorBtn').innerText = `Mirror: ${isMirrored ? 'ON' : 'OFF'}`;
+    document.getElementById('mBtn').innerText = `Mirror: ${isMirrored ? 'ON' : 'OFF'}`;
 }
 
 function toggleLefty() {
     isLefty = !isLefty;
-    document.getElementById('leftyBtn').innerText = `Left-Handed: ${isLefty ? 'ON' : 'OFF'}`;
+    document.getElementById('lBtn').innerText = `Lefty: ${isLefty ? 'ON' : 'OFF'}`;
 }
 
 async function startApp(branch) {
     await Tone.start();
-    const reverb = new Tone.Reverb({decay: 7, wet: 0.45}).toDestination();
+    const reverb = new Tone.Reverb({decay: 6, wet: 0.4}).toDestination();
     synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 20,
+        maxPolyphony: 16, // Optimized for stability
         harmonicity: branch === 'CRYSTAL' ? 7 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.25, release: 3.5 }
+        envelope: { attack: 0.2, release: 3 }
     }).connect(reverb);
 
-    document.getElementById('menu').classList.add('hidden');
-    document.getElementById('hud').classList.remove('hidden');
+    document.querySelectorAll('.ui-layer').forEach(el => el.classList.add('hidden'));
+    document.getElementById('neural-hud').classList.remove('hidden');
+    document.getElementById('pitch-guide').classList.remove('hidden');
+    document.getElementById('exit-btn').classList.remove('hidden');
     isLive = true;
     init();
 }
@@ -103,10 +114,15 @@ function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    const handsDetected = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+    document.getElementById('hand-count').innerText = `HANDS: ${handsDetected}`;
+
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const label = results.multiHandedness[i].label; // Actual hand detected
+            const label = results.multiHandedness[i].label; // Left/Right
             const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.12;
+
+            document.getElementById('hand-type').innerText = label.toUpperCase() + (isFist ? " (MUTE)" : " (ACTIVE)");
 
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
@@ -114,41 +130,41 @@ function onResults(results) {
                 const fingerKey = `${label}-${id}`;
                 
                 if(active && !isFist) {
-                    // PITCH LOGIC
                     let zone = Math.floor(tip.x * 12);
-                    // If mirrored, flip the zone calculation
                     if(isMirrored) zone = 11 - zone;
                     
                     const notes = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
                     const note = notes[Math.max(0, Math.min(zone, 11))];
-
-                    // LEFTY MODE: Flip pitch priority if needed
-                    if(isLefty && label === "Right") { /* custom logic if desired */ }
+                    document.getElementById('pitch-data').innerText = `FREQ: ${note}`;
 
                     if(lastNotes[fingerKey] !== note) {
                         synth.triggerAttackRelease(note, "4n", undefined, 0.4);
                         lastNotes[fingerKey] = note;
-                        if(sparkles.length < 50) {
-                            sparkles.push({x:tip.x*canvas.width, y:tip.y*canvas.height, l:1.0, vx:(Math.random()-0.5), vy:-1.5});
+                        if(sparkles.length < 30) {
+                            sparkles.push({x:tip.x*canvas.width, y:tip.y*canvas.height, l:1.0});
                         }
                     }
-                    ctx.fillStyle = "white";
-                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 4, 0, Math.PI*2); ctx.fill();
+                    // Visual Neural Point
+                    ctx.fillStyle = label === "Right" ? "var(--divine)" : "var(--gold)";
+                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 5, 0, Math.PI*2); ctx.fill();
                 } else { lastNotes[fingerKey] = null; }
             });
         });
+    } else {
+        document.getElementById('hand-type').innerText = "SEARCHING...";
     }
 
+    // Performance particles
     for (let i = sparkles.length - 1; i >= 0; i--) {
-        let s = sparkles[i]; s.y += s.vy; s.l -= 0.02;
+        let s = sparkles[i]; s.l -= 0.04;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
-        ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.l})`;
         ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI*2); ctx.fill();
     }
 }
 
 function init() {
-    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    const hands = new Hands({locateFile: (file) => `https://cdn.npmmirror.com/package/@mediapipe/hands/${file}`});
     hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
     hands.onResults(onResults);
     new Camera(video, {
