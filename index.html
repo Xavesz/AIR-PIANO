@@ -8,44 +8,31 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --accent: #00f2ff; --gold: #ffd700; --bg: #010103; --panel: rgba(255,255,255,0.03); }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', -apple-system, sans-serif; }
+        :root { --accent: #00f2ff; --gold: #ffd700; --bg: #000; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
-        /* UI Overlays */
-        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a20 0%, #000 100%); transition: 0.8s ease; text-align: center; }
-        .hidden { opacity: 0 !important; pointer-events: none; transform: translateY(20px); }
+        /* Cinematic Menu */
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a20 0%, #000 100%); transition: 1s cubic-bezier(0.4, 0, 0.2, 1); text-align: center; }
+        .hidden { opacity: 0 !important; pointer-events: none; transform: scale(1.2); }
 
-        /* Professional Glass Panel */
-        .glass-card { 
-            background: rgba(255,255,255,0.02); backdrop-filter: blur(25px); 
-            border: 1px solid rgba(255,255,255,0.1); padding: 50px; border-radius: 30px; 
-            max-width: 600px; box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-        }
+        /* Ripple Effect (Automatic Shutdown via JS) */
+        .ripple-circle { position: absolute; border: 2px solid var(--accent); border-radius: 50%; opacity: 0; pointer-events: none; }
+        @keyframes ripple-out { 0% { transform: scale(0); opacity: 0.5; } 100% { transform: scale(4); opacity: 0; } }
 
-        .header { font-size: 2.5rem; letter-spacing: 20px; font-weight: 100; text-transform: uppercase; margin: 0; color: #fff; }
-        .author { font-size: 0.6rem; color: #555; letter-spacing: 10px; margin: 15px 0 40px; text-transform: uppercase; }
+        .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 2px; max-width: 550px; width: 85%; }
+        .header { font-size: clamp(1.5rem, 7vw, 2.5rem); letter-spacing: 15px; font-weight: 100; text-transform: uppercase; margin: 0; }
+        .author { font-size: 0.65rem; color: var(--accent); letter-spacing: 8px; margin: 15px 0 35px; text-transform: uppercase; }
 
-        .btn { 
-            padding: 16px 40px; border: 1px solid rgba(0,242,255,0.3); background: transparent; 
-            color: var(--accent); border-radius: 4px; cursor: pointer; font-size: 0.75rem; 
-            letter-spacing: 4px; text-transform: uppercase; transition: 0.4s;
-        }
-        .btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 40px rgba(0,242,255,0.4); }
+        /* HUD & Controls */
+        .btn { padding: 15px 40px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; cursor: pointer; font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; margin: 10px; transition: 0.4s; }
+        .btn:hover { background: var(--accent); color: black; border-color: var(--accent); }
+        
+        #hud-top { position: absolute; top: 30px; width: 90%; display: flex; justify-content: space-between; z-index: 500; pointer-events: none; }
+        .zone-label { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; font-size: 0.6rem; letter-spacing: 2px; color: #666; transition: 0.3s; }
+        .zone-active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 15px rgba(0,242,255,0.2); }
 
-        /* Neural Dashboard HUD */
-        #hud-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; display: flex; flex-direction: column; justify-content: space-between; padding: 40px; box-sizing: border-box; }
-        .hud-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .hud-box { background: rgba(0,0,0,0.5); border-left: 2px solid rgba(255,255,255,0.1); padding: 15px 25px; backdrop-filter: blur(10px); }
-        .hud-label { font-size: 0.5rem; color: #555; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
-        .hud-value { font-size: 0.8rem; letter-spacing: 3px; font-weight: 200; color: #fff; }
-        .active-hand { border-left-color: var(--accent); color: var(--accent); }
-
-        /* Pitch Map Visualizer */
-        .pitch-grid { position: absolute; bottom: 120px; width: 80%; left: 10%; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
-        .pitch-label { font-size: 0.5rem; color: #222; letter-spacing: 4px; text-transform: uppercase; }
-
-        .legal-panel { font-size: 0.7rem; color: #444; line-height: 1.6; border-top: 1px solid #111; margin-top: 40px; padding-top: 25px; text-align: left; }
+        .manual-text { font-size: 0.75rem; color: #888; text-align: left; line-height: 1.6; border-top: 1px solid #222; margin-top: 30px; padding-top: 20px; }
     </style>
 </head>
 <body>
@@ -55,51 +42,25 @@
             <h1 class="header">QUANTUM SOUL</h1>
             <div class="author">By Prasurjya Deka</div>
             
-            <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 40px;">
-                <button class="btn" style="border-color: var(--gold); color: var(--gold);" onclick="startApp('CRYSTAL')">Mythic Branch</button>
-                <button class="btn" onclick="startApp('SOUL')">Soul Branch</button>
+            <div style="display:flex; justify-content: center; gap: 10px;">
+                <button class="btn" onclick="startApp('MYTHIC')">Enter Mythic</button>
+                <button class="btn" onclick="startApp('SOUL')">Enter Soul</button>
             </div>
 
-            <div class="legal-panel">
-                <b style="color:#666; font-size: 0.6rem; letter-spacing: 2px;">OPERATIONAL DISCLOSURE:</b><br>
-                Local Edge Inference active. No biometric data is stored or transmitted. This environment operates strictly within browser-side RAM to ensure 100% user privacy and legal compliance.
-                <div style="margin-top: 15px; color: #333; font-size: 0.6rem;">© 2025 PRASURJYA DEKA | SECURE SYNTHESIS</div>
+            <div class="manual-text">
+                <b style="color:var(--gold); font-size:0.6rem; letter-spacing: 2px;">SECURE PROTOCOL & MANUAL:</b><br>
+                1. <b>Privacy:</b> 100% Local Inference. No data storage.<br>
+                2. <b>Pitch:</b> Left = <b>BASE/LOW</b> | Right = <b>HIGH/TREBLE</b>.<br>
+                3. <b>Fists:</b> Closes audio gates instantly.<br>
+                <button onclick="sendFeedback()" style="background:none; border:none; color:var(--accent); cursor:pointer; padding:0; margin-top:10px; font-size:0.65rem; text-transform:uppercase; letter-spacing:1px;">Send Professional Feedback</button>
             </div>
         </div>
     </div>
 
-    <div id="hud-container" class="hidden">
-        <div class="hud-row">
-            <div class="hud-box" id="left-stat">
-                <div class="hud-label">Frequency Zone</div>
-                <div class="hud-value">BASS / LOW</div>
-            </div>
-            <button class="btn" style="padding: 10px 25px; font-size: 0.6rem; border-color: #222;" onclick="location.reload()">TERMINATE</button>
-            <div class="hud-box" id="right-stat">
-                <div class="hud-label">Frequency Zone</div>
-                <div class="hud-value">TREBLE / HIGH</div>
-            </div>
-        </div>
-
-        <div class="pitch-grid">
-            <span class="pitch-label">Sub-Bass</span>
-            <span class="pitch-label">Harmonic Mid</span>
-            <span class="pitch-label">Crystalline High</span>
-        </div>
-
-        <div class="hud-row" style="align-items: flex-end;">
-            <div class="hud-box" style="border-left: none; border-right: 2px solid rgba(255,255,255,0.1); text-align: right;">
-                <div class="hud-label">Encryption</div>
-                <div class="hud-value" style="font-size: 0.6rem;">LOCAL_AES_256</div>
-            </div>
-            <div class="hud-box" style="border: none; text-align: center;">
-                <button class="hud-label" style="background:none; border:none; color:var(--accent); cursor:pointer;" onclick="sendFeedback()">Send Feedback</button>
-            </div>
-            <div class="hud-box">
-                <div class="hud-label">System State</div>
-                <div class="hud-value" style="font-size: 0.6rem; color: var(--accent);">STABLE_V5</div>
-            </div>
-        </div>
+    <div id="hud-top" class="hidden">
+        <div id="l-zone" class="zone-label">LOW / BASE</div>
+        <button class="btn" style="padding: 5px 15px; margin:0; pointer-events:auto;" onclick="location.reload()">EXIT</button>
+        <div id="r-zone" class="zone-label">HIGH / TREBLE</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
@@ -111,26 +72,44 @@ const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-function createMeteor() {
-    if (meteors.length < 2 && Math.random() < 0.01) {
-        meteors.push({ x: Math.random() * canvas.width, y: 0, len: 60, v: 12, life: 1.0 });
+// 1. DYNAMIC RIPPLE TRANSITION (SHUTS DOWN AFTER 2 SECONDS TO PREVENT LAG)
+function triggerRipple() {
+    for(let i=0; i<3; i++) {
+        const r = document.createElement('div');
+        r.className = 'ripple-circle';
+        r.style.width = r.style.height = '100px';
+        r.style.left = '50%'; r.style.top = '50%';
+        r.style.marginLeft = r.style.marginTop = '-50px';
+        r.style.animation = `ripple-out 1.5s ease-out ${i*0.3}s forwards`;
+        document.body.appendChild(r);
+        setTimeout(() => r.remove(), 3000);
     }
 }
 
-async function startApp(branch) {
+// 2. SHOOTING STAR ENGINE (CRASH-PROOF)
+function createMeteor() {
+    if (meteors.length < 2 && Math.random() < 0.01) {
+        meteors.push({ x: Math.random() * canvas.width, y: 0, v: 15, life: 1.0 });
+    }
+}
+
+async function startApp(mode) {
+    triggerRipple(); // Visual Splash
     await Tone.start();
-    const reverb = new Tone.Reverb({decay: 7, wet: 0.5}).toDestination();
+    const reverb = new Tone.Reverb(7).toDestination();
     synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 24,
-        harmonicity: branch === 'CRYSTAL' ? 7 : 1.5,
+        maxPolyphony: 20,
+        harmonicity: mode === 'MYTHIC' ? 8 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.2, release: 3.5 }
+        envelope: { attack: 0.2, release: 4 }
     }).connect(reverb);
 
-    document.getElementById('menu').classList.add('hidden');
-    document.getElementById('hud-container').classList.remove('hidden');
-    isLive = true;
-    init();
+    setTimeout(() => {
+        document.getElementById('menu').classList.add('hidden');
+        document.getElementById('hud-top').classList.remove('hidden');
+        isLive = true;
+        init();
+    }, 1000);
 }
 
 async function sendFeedback() {
@@ -146,29 +125,25 @@ async function sendFeedback() {
 
 function onResults(results) {
     if(!isLive) return;
-    
-    // Smooth cinematic background
-    ctx.fillStyle = "rgba(1, 1, 3, 0.3)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; // Cinematic Trails
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Meteors
     createMeteor();
     meteors.forEach((m, i) => {
         m.x -= m.v; m.y += m.v; m.life -= 0.05;
-        if (m.life <= 0) meteors.splice(i, 1);
-        ctx.strokeStyle = `rgba(255, 255, 255, ${m.life})`;
-        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x + m.len, m.y - m.len); ctx.stroke();
+        if(m.life <= 0) meteors.splice(i,1);
+        ctx.strokeStyle = `rgba(255,255,255,${m.life})`;
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x+40, m.y-40); ctx.stroke();
     });
 
-    // Reset HUD status
-    document.getElementById('left-stat').classList.remove('active-hand');
-    document.getElementById('right-stat').classList.remove('active-hand');
+    document.getElementById('l-zone').classList.remove('zone-active');
+    document.getElementById('r-zone').classList.remove('zone-active');
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const side = results.multiHandedness[i].label; // Left/Right
-            const hudId = side === 'Left' ? 'left-stat' : 'right-stat';
-            document.getElementById(hudId).classList.add('active-hand');
+            const side = results.multiHandedness[i].label;
+            const hudId = side === 'Left' ? 'l-zone' : 'r-zone';
+            document.getElementById(hudId).classList.add('zone-active');
 
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
@@ -176,33 +151,27 @@ function onResults(results) {
                 const fingerKey = `${side}-${id}`;
                 
                 if(active) {
-                    const zone = Math.floor(tip.x * 12);
-                    const scale = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-                    const note = scale[Math.min(zone, 11)];
+                    const zone = Math.floor(tip.x * 10);
+                    const scale = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4'];
+                    const note = scale[Math.min(zone, 9)];
 
                     if(lastNotes[fingerKey] !== note) {
                         synth.triggerAttackRelease(note, "4n", undefined, 0.4);
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 30) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
-                    
-                    // Visual Core of the finger
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = side === 'Left' ? "var(--accent)" : "var(--gold)";
                     ctx.fillStyle = "#fff";
                     ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 4, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0;
                 } else { lastNotes[fingerKey] = null; }
             });
         });
     }
 
-    // Interactive Glitter
     for (let i = sparkles.length - 1; i >= 0; i--) {
         let s = sparkles[i]; s.l -= 0.05;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
-        ctx.fillStyle = `rgba(255, 255, 255, ${s.l})`;
-        ctx.beginPath(); ctx.arc(s.x, s.y, 1, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI*2); ctx.fill();
     }
 }
 
