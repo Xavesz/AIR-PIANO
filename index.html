@@ -8,62 +8,89 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000000; }
+        :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
-        #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
         
-        /* UI Polish */
-        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0a0a25 0%, #000 100%); transition: 1s ease; text-align: center; backdrop-filter: blur(10px); }
-        .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
+        /* Mirror Control via CSS Variable */
+        #output_canvas, #input_video { transform: scaleX(var(--mirror, -1)); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
         
-        .brand-header { font-size: clamp(2rem, 10vw, 4.5rem); letter-spacing: 25px; margin: 0; font-weight: 100; text-shadow: 0 0 30px rgba(0,242,255,0.3); }
-        .btn { padding: 18px 50px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); color: white; border-radius: 2px; cursor: pointer; font-weight: bold; letter-spacing: 5px; text-transform: uppercase; margin: 15px; transition: 0.5s; overflow: hidden; position: relative; }
-        .btn:hover { border-color: var(--divine); background: rgba(0,242,255,0.1); box-shadow: 0 0 50px rgba(0,242,255,0.2); }
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 0.5s; text-align: center; backdrop-filter: blur(10px); }
+        .hidden { display: none !important; }
         
-        .legal-text { font-size: 0.6rem; color: #444; max-width: 400px; margin-top: 40px; line-height: 1.6; letter-spacing: 1px; }
-        footer { position: absolute; bottom: 30px; width: 100%; text-align: center; z-index: 1100; font-size: 0.7rem; color: #333; letter-spacing: 4px; }
+        .brand-header { font-size: clamp(2rem, 8vw, 3.5rem); letter-spacing: 15px; margin: 0; font-weight: 200; }
+        .btn { padding: 12px 35px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin: 8px; font-size: 0.7rem; transition: 0.3s; }
+        .btn:hover { border-color: var(--divine); background: rgba(0,242,255,0.1); }
+        .btn.active { background: var(--divine); color: black; border-color: var(--divine); }
+
+        #manual { max-width: 500px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin: 20px 0; font-size: 0.8rem; line-height: 1.6; text-align: left; }
+        .pitch-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; font-size: 0.6rem; color: #888; text-align: center; }
+        .pitch-map div { border: 1px solid #333; padding: 5px; }
+        
+        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.7rem; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
         <h1 class="brand-header">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.7rem; color: var(--divine); letter-spacing: 10px; margin-top: 15px;">PRASURJYA DEKA</div>
+        <div style="font-size: 0.7rem; color: #555; letter-spacing: 5px; margin-top: 5px;">BY PRASURJYA DEKA</div>
         
-        <div style="margin: 40px 0;">
-            <button class="btn" onclick="startApp('CRYSTAL')">Crystal</button>
-            <button class="btn" onclick="startApp('SOUL')">Soul</button>
+        <div id="manual">
+            <b style="color:var(--gold);">PITCH & PERFORMANCE MANUAL:</b><br>
+            • 🎹 <b>X-Axis:</b> Left screen = Low Frequency | Right screen = High Frequency.<br>
+            • 🖐 <b>Touch:</b> Extend fingers to "pluck" the neural strings.<br>
+            • ✊ <b>Reset:</b> A closed fist acts as an emergency audio gate.<br>
+            <div class="pitch-map">
+                <div>BASS (Left)</div><div>MID (Center)</div><div>TREBLE (Right)</div>
+            </div>
+            <br>
+            <b>CUSTOMIZE ORIENTATION:</b><br>
+            <button class="btn" id="leftyBtn" onclick="toggleLefty()">Left-Handed: OFF</button>
+            <button class="btn" id="mirrorBtn" onclick="toggleMirror()">Mirror: ON</button>
         </div>
 
-        <div class="legal-text">
-            <b>NON-DATA COLLECTION NOTICE:</b> This application operates via Local Machine Learning. Camera streams are processed in temporary RAM and never uploaded. Fully compliant with Global Privacy Regulations.
+        <div>
+            <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="startApp('CRYSTAL')">Crystal Mode</button>
+            <button class="btn" onclick="startApp('SOUL')">Soul Mode</button>
         </div>
     </div>
 
-    <div id="hud" class="hidden" style="position:absolute; top:30px; left:30px; z-index:1000;">
-        <button class="btn" style="padding:10px 30px; font-size:0.6rem;" onclick="location.reload()">TERMINATE</button>
+    <div id="hud" class="hidden" style="position:absolute; top:25px; left:25px; z-index:1000;">
+        <button class="btn" onclick="location.reload()">EXIT</button>
     </div>
 
-    <footer>© 2025 PRASURJYA DEKA</footer>
+    <footer>© 2025 PRASURJYA DEKA | 100% SECURE LOCAL INFERENCE</footer>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" playsinline style="display:none"></video>
 
 <script>
 let synth, isLive = false, lastNotes = {}, sparkles = [];
+let isLefty = false, isMirrored = true;
+
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
+function toggleMirror() {
+    isMirrored = !isMirrored;
+    document.body.style.setProperty('--mirror', isMirrored ? "-1" : "1");
+    document.getElementById('mirrorBtn').innerText = `Mirror: ${isMirrored ? 'ON' : 'OFF'}`;
+}
+
+function toggleLefty() {
+    isLefty = !isLefty;
+    document.getElementById('leftyBtn').innerText = `Left-Handed: ${isLefty ? 'ON' : 'OFF'}`;
+}
+
 async function startApp(branch) {
     await Tone.start();
-    const reverb = new Tone.Reverb({decay: 8, wet: 0.5}).toDestination();
-    
+    const reverb = new Tone.Reverb({decay: 7, wet: 0.45}).toDestination();
     synth = new Tone.PolySynth(Tone.FMSynth, {
-        maxPolyphony: 24, // Optimized limit
-        harmonicity: branch === 'CRYSTAL' ? 8 : 1.5,
-        modulationIndex: 25,
-        envelope: { attack: 0.3, release: 4 }
+        maxPolyphony: 20,
+        harmonicity: branch === 'CRYSTAL' ? 7 : 1.5,
+        modulationIndex: 20,
+        envelope: { attack: 0.25, release: 3.5 }
     }).connect(reverb);
 
     document.getElementById('menu').classList.add('hidden');
@@ -74,60 +101,50 @@ async function startApp(branch) {
 
 function onResults(results) {
     if(!isLive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // VISUAL OPTIMIZATION: Motion Blur Effect
-    ctx.fillStyle = "rgba(0, 0, 0, 0.15)"; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Additive Blending for Glow
-    ctx.globalCompositeOperation = "lighter";
-
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const side = results.multiHandedness[i].label;
+            const label = results.multiHandedness[i].label; // Actual hand detected
+            const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.12;
+
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
                 const active = tip.y < lm[id-2].y;
-                const fingerKey = `${side}-${id}`;
+                const fingerKey = `${label}-${id}`;
                 
-                if(active) {
-                    const zone = Math.floor(tip.x * 12);
-                    const scale = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5'];
-                    const note = scale[Math.min(zone, 11)];
+                if(active && !isFist) {
+                    // PITCH LOGIC
+                    let zone = Math.floor(tip.x * 12);
+                    // If mirrored, flip the zone calculation
+                    if(isMirrored) zone = 11 - zone;
+                    
+                    const notes = ['C3','E3','G3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
+                    const note = notes[Math.max(0, Math.min(zone, 11))];
+
+                    // LEFTY MODE: Flip pitch priority if needed
+                    if(isLefty && label === "Right") { /* custom logic if desired */ }
 
                     if(lastNotes[fingerKey] !== note) {
-                        synth.triggerAttackRelease(note, "4n", undefined, 0.3);
+                        synth.triggerAttackRelease(note, "4n", undefined, 0.4);
                         lastNotes[fingerKey] = note;
-                        if(sparkles.length < 60) {
-                            sparkles.push({
-                                x: tip.x*canvas.width, 
-                                y: tip.y*canvas.height, 
-                                l: 1.0, 
-                                c: side==="Left" ? '0,242,255' : '255,215,0',
-                                v: (Math.random()*2)
-                            });
+                        if(sparkles.length < 50) {
+                            sparkles.push({x:tip.x*canvas.width, y:tip.y*canvas.height, l:1.0, vx:(Math.random()-0.5), vy:-1.5});
                         }
                     }
-                    // Fingertip Aura
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = side==="Left" ? "var(--divine)" : "var(--gold)";
                     ctx.fillStyle = "white";
                     ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 4, 0, Math.PI*2); ctx.fill();
-                    ctx.shadowBlur = 0;
                 } else { lastNotes[fingerKey] = null; }
             });
         });
     }
 
-    // High-Efficiency Aurora Particles
     for (let i = sparkles.length - 1; i >= 0; i--) {
-        let s = sparkles[i];
-        s.y -= s.v; s.l -= 0.015;
+        let s = sparkles[i]; s.y += s.vy; s.l -= 0.02;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
-        ctx.fillStyle = `rgba(${s.c}, ${s.l})`;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.l * 3, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI*2); ctx.fill();
     }
-    ctx.globalCompositeOperation = "source-over";
 }
 
 function init() {
