@@ -3,60 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quantum Soul | Prasurjya Deka</title>
+    <title>Quantum Soul | Movie Theme Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root { --divine: #00f2ff; --soul: #ffaa00; --bg: #010105; }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
-        
         .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 1s; text-align: center; }
         .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
-        
-        .btn { padding: 18px 45px; border: 1px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 4px; text-transform: uppercase; margin: 15px; transition: 0.4s; pointer-events: auto; }
-        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 40px var(--divine); transform: scale(1.05); }
-        
+        .btn { padding: 18px 45px; border: 2px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 4px; text-transform: uppercase; margin: 15px; pointer-events: auto; }
+        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 40px var(--divine); }
         #hud { position: absolute; top: 25px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px; z-index: 500; box-sizing: border-box; pointer-events: none; }
         .stat-box { background: rgba(0,0,0,0.8); padding: 15px 30px; border-radius: 15px; border: 1px solid rgba(0,242,255,0.3); backdrop-filter: blur(15px); }
-        
-        #manual { max-width: 450px; background: rgba(255,255,255,0.03); padding: 30px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; font-size: 0.9rem; }
-        
+        #manual { max-width: 450px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; font-size: 0.9rem; }
         footer { position: absolute; bottom: 25px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 40px; z-index: 1100; font-size: 0.75rem; color: #444; }
-        footer button { color: #555; background: none; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        footer button { color: #555; background: none; border: none; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <h1 style="letter-spacing:15px; margin-bottom: 5px; font-size: clamp(2rem, 8vw, 3.5rem);">QUANTUM <span style="color:var(--divine)">SOUL</span></h1>
-        <div style="font-size: 0.7rem; color: #555; letter-spacing: 5px; margin-bottom: 30px;">CREATED BY PRASURJYA DEKA</div>
+        <h1 style="letter-spacing:15px; margin-bottom: 5px;">QUANTUM <span style="color:var(--divine)">SOUL</span></h1>
+        <div style="font-size: 0.7rem; color: #555; letter-spacing: 5px; margin-bottom: 30px;">BY PRASURJYA DEKA</div>
         
         <div id="manual">
-            <b style="color:var(--divine); letter-spacing: 2px;">THE INTERSTELLAR GUIDE</b><br><br>
-            🖐 <b>Fingertips:</b> Create calm, crystal melodies.<br>
-            ✊ <b>One Fist:</b> Stronger, richer music.<br>
-            ✊✊ <b>Both Fists:</b> Deep Soul Resonance.<br>
-            🖐🖐 <b>Open Both:</b> Reset to calm mode.
+            <b style="color:var(--divine);">MOVIE THEME MODE:</b><br><br>
+            ✨ <b>Play Chimes:</b> Move fingers to play magic themes.<br>
+            ✊ <b>One Fist:</b> More power & resonance.<br>
+            ✊✊ <b>Both Fists:</b> Deep Universe Vibrations.<br>
+            🖐🖐 <b>Open Both:</b> Silence & Reset.
         </div>
         
         <button class="btn" onclick="startApp()">START RESONANCE</button>
     </div>
 
     <div id="hud" class="hidden">
-        <button class="btn" style="padding:10px 25px; font-size:0.7rem; pointer-events: auto; margin:0;" onclick="location.reload()">BACK TO HOME</button>
+        <button class="btn" style="padding:10px 25px; font-size:0.7rem; pointer-events: auto; margin:0;" onclick="location.reload()">BACK</button>
         <div class="stat-box">
-            <div id="state-text" style="color:var(--divine); font-weight:bold; letter-spacing:3px;">ANGELIC MODE</div>
-            <div id="coherence-label" style="font-size:0.65rem; color:#888; margin-top:5px;">RESONANCE: 0%</div>
+            <div id="state-text" style="color:var(--divine); font-weight:bold; letter-spacing:3px;">MAGIC MODE</div>
+            <div id="coherence-label" style="font-size:0.65rem; color:#888;">COHERENCE: 0%</div>
         </div>
     </div>
 
     <footer>
         <span>© Prasurjya Deka</span>
-        <form action="https://formspree.io/f/mykgkorl" method="POST">
-            <button type="submit">Send Feedback</button>
-        </form>
+        <form action="https://formspree.io/f/mykgkorl" method="POST"><button type="submit">Feedback</button></form>
     </footer>
 
     <canvas id="output_canvas"></canvas>
@@ -70,42 +63,40 @@ const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-for(let i=0; i<120; i++) {
-    stars.push({x: Math.random(), y: Math.random(), s: Math.random()*2 + 0.5, o: Math.random(), vx:0, vy:0});
-}
+for(let i=0; i<100; i++) stars.push({x: Math.random(), y: Math.random(), s: Math.random()*2, o: Math.random(), vx:0, vy:0});
 
 async function startApp() {
     try {
         await Tone.start();
-        const reverb = new Tone.Reverb(7).toDestination();
-        const panner = new Tone.AutoPanner("2n").connect(reverb).start();
+        const reverb = new Tone.Reverb(8).toDestination();
         
+        // MOVIE SOUNDSET: Crystalline FM Synth for "Harry Potter" style bells
         synth = new Tone.PolySynth(Tone.FMSynth, {
-            harmonicity: 3,
-            modulationIndex: 10,
-            oscillator: { type: "sine" },
-            envelope: { attack: 1, decay: 1, sustain: 0.8, release: 4 }
-        }).connect(panner);
+            harmonicity: 6, // The secret to the "Bell" sound
+            modulationIndex: 12,
+            envelope: { attack: 0.05, decay: 0.5, sustain: 0.3, release: 3 }
+        }).connect(reverb);
 
         document.getElementById('menu').classList.add('hidden');
         document.getElementById('hud').classList.remove('hidden');
         isLive = true;
         initTracking();
-    } catch (e) { console.error("Audio Start Blocked"); }
+    } catch (e) { console.error(e); }
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw Galaxy Nebula
+    // Background Glow
     let grd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
-    grd.addColorStop(0, `rgba(15, 10, 50, ${0.1 + coherence*0.6})`);
+    grd.addColorStop(0, `rgba(10, 15, 60, ${0.1 + coherence*0.5})`);
     grd.addColorStop(1, "black");
     ctx.fillStyle = grd;
     ctx.fillRect(0,0, canvas.width, canvas.height);
 
     let rf = false, lf = false, cursorX = -100, cursorY = -100;
+
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label === "Left" ? "Right" : "Left";
@@ -117,34 +108,32 @@ function onResults(results) {
                 const x = tip.x * canvas.width;
                 const y = tip.y * canvas.height;
                 const active = tip.y > lm[id-1].y;
-                cursorX = x; cursorY = y; 
+                cursorX = x; cursorY = y;
 
                 if(active && !isFist) {
-                    const notes = ['A3','C4','E4','G4','A4','C5'];
-                    const note = notes[Math.floor(tip.x * notes.length)];
+                    // Movie Theme Scale (Chromatic/Minor for Magic feel)
+                    const scale = ['B3','E4','G4','Gb4','E4','B4','A4','Gb4']; 
+                    const note = scale[Math.floor(tip.x * scale.length)];
+                    
                     if(!fingerStates[`${side}_${id}`]) {
-                        synth.triggerAttack(note, undefined, Tone.dbToGain(-20 + (coherence*15)));
-                        ripples.push({x, y, r: 5, a: 0.8, c: coherence > 0.8 ? "255,170,0" : "0,242,255"});
+                        synth.triggerAttackRelease(note, "4n", undefined, Tone.dbToGain(-15 + (coherence*10)));
+                        ripples.push({x, y, r: 5, a: 0.8});
                         fingerStates[`${side}_${id}`] = true;
                     }
-                } else if(fingerStates[`${side}_${id}`]) {
-                    synth.releaseAll(); fingerStates[`${side}_${id}`] = false;
-                }
+                } else { fingerStates[`${side}_${id}`] = false; }
+                
                 ctx.fillStyle = active ? (coherence > 0.8 ? "#ffaa00" : "#00f2ff") : "white";
-                ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
             });
         });
     }
 
-    // Star Gravity Physics
+    // Star Physics
     stars.forEach(s => {
-        let sx = s.x * canvas.width, sy = s.y * canvas.height;
-        let dx = cursorX - sx, dy = cursorY - sy;
+        let dx = cursorX - s.x*canvas.width, dy = cursorY - s.y*canvas.height;
         let dist = Math.sqrt(dx*dx + dy*dy);
-        if(dist < 300) {
-            s.vx += (dx/dist) * 0.02; s.vy += (dy/dist) * 0.02;
-        }
-        s.x += s.vx; s.y += s.vy; s.vx *= 0.95; s.vy *= 0.95;
+        if(dist < 250) { s.vx += (dx/dist)*0.03; s.vy += (dy/dist)*0.03; }
+        s.x += s.vx; s.y += s.vy; s.vx *= 0.94; s.vy *= 0.94;
         ctx.fillStyle = `rgba(255, 255, 255, ${s.o + coherence})`;
         ctx.beginPath(); ctx.arc(s.x*canvas.width, s.y*canvas.height, s.s, 0, Math.PI*2); ctx.fill();
     });
@@ -152,23 +141,19 @@ function onResults(results) {
     const stateLabel = document.getElementById('state-text');
     if(rf && lf) {
         coherence = Math.min(coherence + 0.015, 1);
-        stateLabel.innerText = "DIVINE SOUL RESONANCE";
-        stateLabel.style.color = "#ffaa00";
+        stateLabel.innerText = "DIVINE SOUL STATE";
     } else if(rf) {
-        coherence = Math.min(coherence + 0.01, 0.75);
-        stateLabel.innerText = "CRYSTALLINE COHERENCE";
-        stateLabel.style.color = "#00f2ff";
+        coherence = Math.min(coherence + 0.01, 0.7);
+        stateLabel.innerText = "MAGIC COHERENCE";
     } else {
         coherence = Math.max(coherence - 0.01, 0);
-        stateLabel.innerText = coherence < 0.1 ? "ANGELIC MODE" : "STABILIZING...";
-        stateLabel.style.color = "white";
+        stateLabel.innerText = "MAGIC MODE";
     }
     document.getElementById('coherence-label').innerText = `RESONANCE: ${Math.round(coherence * 100)}%`;
 
     ripples.forEach((r, i) => {
-        r.r += 2.2; r.a -= 0.015;
-        ctx.strokeStyle = `rgba(${r.c}, ${r.a})`;
-        ctx.lineWidth = 2 + (coherence * 3);
+        r.r += 2.5; r.a -= 0.02;
+        ctx.strokeStyle = `rgba(0, 242, 255, ${r.a})`;
         ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
         if(r.a <= 0) ripples.splice(i, 1);
     });
@@ -178,15 +163,13 @@ function initTracking() {
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
     hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.6 });
     hands.onResults(onResults);
-    const camera = new Camera(video, {
+    new Camera(video, {
         onFrame: async () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             try { await hands.send({image: video}); } catch(e) {}
         },
         width: 640, height: 480
-    });
-    camera.start();
+    }).start();
 }
 </script>
 </body>
