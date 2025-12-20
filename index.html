@@ -11,152 +11,112 @@
         :root { --divine: #00f2ff; --gold: #ffd700; --bg: #010103; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
-        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 0.5s; text-align: center; }
-        .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
-        .btn { padding: 12px 30px; border: 1px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 8px; transition: 0.3s; font-size: 0.75rem; }
-        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 25px var(--divine); }
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); text-align: center; }
+        .hidden { display: none !important; }
+        .btn { padding: 10px 25px; border: 1px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 5px; font-size: 0.7rem; }
         .btn-gold { border-color: var(--gold); color: var(--gold); }
-        #hud { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; z-index: 500; pointer-events: none; box-sizing: border-box; }
-        .stat-box { background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        footer { position: absolute; bottom: 15px; width: 100%; text-align: center; z-index: 1100; font-size: 0.65rem; color: #444; letter-spacing: 2px; }
+        footer { position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 1100; font-size: 0.6rem; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <h1 style="letter-spacing:12px; font-size: 2.5rem; margin-bottom: 0;">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.7rem; color: #666; letter-spacing: 5px; margin-bottom: 25px; text-transform: uppercase;">A Sound Experience by Prasurjya Deka</div>
-        
-        <div style="max-width: 380px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; font-size: 0.8rem; line-height: 1.6;">
-            <b style="color:var(--gold); letter-spacing: 1px;">THE PROTOCOL:</b><br><br>
-            • Right Hand: High Crystalline Magic<br>
-            • Left Hand: Deep Interstellar Soul<br>
-            • Fists: Silent Quantum Void
-        </div>
-        
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 500px;">
-            <button class="btn btn-gold" onclick="startApp('MYTHIC')">Mythic Branch</button>
-            <button class="btn" onclick="startApp('OCEAN')">Ocean Heart</button>
-            <button class="btn btn-gold" onclick="startApp('NEON')">Neon Synth</button>
-            <button class="btn" onclick="startApp('GALACTIC')">Galactic Force</button>
-            <button class="btn btn-gold" onclick="startApp('RAGA')">Eastern Soul</button>
+        <h1 style="letter-spacing:10px; font-size: 2rem;">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
+        <div style="font-size: 0.6rem; color: #555; margin-bottom: 20px;">BY PRASURJYA DEKA</div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; max-width: 400px;">
+            <button class="btn btn-gold" onclick="startApp('MYTHIC')">Mythic</button>
+            <button class="btn" onclick="startApp('OCEAN')">Ocean</button>
+            <button class="btn btn-gold" onclick="startApp('NEON')">Neon</button>
+            <button class="btn" onclick="startApp('GALAXY')">Galaxy</button>
+            <button class="btn btn-gold" onclick="startApp('SOUL')">Soul</button>
         </div>
     </div>
 
-    <div id="hud" class="hidden">
-        <button class="btn" style="padding:6px 15px; font-size:0.6rem; pointer-events: auto;" onclick="location.reload()">TERMINATE STAGE</button>
-        <div class="stat-box">
-            <div id="state-text" style="color:var(--gold); font-size:0.7rem; font-weight: bold; letter-spacing: 1px;">ACTIVE</div>
-            <div id="author-tag" style="font-size: 0.5rem; color: #555;">PRASURJYA DEKA</div>
-        </div>
+    <div id="hud" class="hidden" style="position:absolute; top:20px; left:20px; z-index:1000;">
+        <button class="btn" onclick="location.reload()">BACK</button>
     </div>
 
-    <footer>
-        <span>© 2025 PRASURJYA DEKA</span> | 
-        <form action="https://formspree.io/f/mykgkorl" method="POST" style="display:inline;">
-            <button type="submit" style="background:none; border:none; color:#444; cursor:pointer; font-size:0.65rem; text-transform:uppercase;">Feedback</button>
-        </form>
-    </footer>
+    <footer>© 2025 PRASURJYA DEKA | <form action="https://formspree.io/f/mykgkorl" method="POST" style="display:inline;"><button type="submit" style="background:none; border:none; color:#444; cursor:pointer; font-size:0.6rem;">FEEDBACK</button></form></footer>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" playsinline style="display:none"></video>
 
 <script>
-let synth, isLive = false, currentBranch = '', sparkles = [];
+let synth, isLive = false, sparkles = [];
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 let fingerStates = {};
 
-async function startApp(branch) {
-    try {
-        await Tone.start();
-        currentBranch = branch;
-        const reverb = new Tone.Reverb({ decay: 7, wet: 0.5 }).toDestination();
-        
-        // Physics-based configs for cinema themes
-        let config = { harmonicity: 2, modulationIndex: 10 };
-        if(branch === 'MYTHIC') config = { harmonicity: 8, modulationIndex: 20 };
-        if(branch === 'NEON') config = { harmonicity: 1, modulationIndex: 40 };
-        if(branch === 'RAGA') config = { harmonicity: 0.5, modulationIndex: 35 };
-        if(branch === 'GALACTIC') config = { harmonicity: 1.01, modulationIndex: 25 };
+async function startApp(mode) {
+    await Tone.start();
+    const reverb = new Tone.Reverb(5).toDestination();
+    
+    // CRASH-PROOF SOUND ENGINE
+    let settings = { harmonicity: 2, modulationIndex: 10 };
+    if(mode === 'MYTHIC') settings = { harmonicity: 10, modulationIndex: 20 };
+    if(mode === 'NEON') settings = { harmonicity: 0.5, modulationIndex: 40 };
 
-        synth = new Tone.PolySynth(Tone.FMSynth, {
-            ...config,
-            envelope: { attack: 0.3, release: 4 } // Smooth stress-relief fade
-        }).connect(reverb);
+    synth = new Tone.PolySynth(Tone.FMSynth, {
+        ...settings,
+        envelope: { attack: 0.2, release: 2.5 }
+    }).connect(reverb);
 
-        document.getElementById('menu').classList.add('hidden');
-        document.getElementById('hud').classList.remove('hidden');
-        isLive = true;
-        initTracking();
-    } catch (e) { console.log("Audio permission required"); }
+    document.getElementById('menu').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    isLive = true;
+    init();
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Subtle Digital Watermark
+    // Watermark
     ctx.globalAlpha = 0.1; ctx.fillStyle = "white"; ctx.font = "10px Arial";
-    ctx.fillText("ENGINE BY PRASURJYA DEKA", 25, canvas.height - 25);
+    ctx.fillText("BY PRASURJYA DEKA", 20, canvas.height - 20);
     ctx.globalAlpha = 1.0;
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const label = results.multiHandedness[i].label; 
-            const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.12;
-
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
-                const pip = lm[id-2];
-                const x = tip.x * canvas.width;
-                const y = tip.y * canvas.height;
-                const active = tip.y < pip.y;
-
-                if(active && !isFist) {
-                    const octave = (label === "Left") ? 5 : 3; 
+                const active = tip.y < lm[id-2].y;
+                if(active) {
+                    const oct = (label === "Left") ? 4 : 3;
                     const notes = ['C','D','E','F','G','A','B'];
-                    const note = notes[Math.floor(tip.x * 7)] + octave;
-                    
-                    if(!fingerStates[label + id]) {
-                        synth.triggerAttack(note, undefined, 0.4);
-                        fingerStates[label + id] = true;
-                        if(sparkles.length < 100) {
-                            for(let k=0; k<2; k++) sparkles.push({x, y, vx:(Math.random()-0.5), vy:(Math.random()-0.5), l:1.0});
-                        }
+                    const note = notes[Math.floor(tip.x * 7)] + oct;
+                    if(!fingerStates[label+id]) {
+                        synth.triggerAttack(note);
+                        fingerStates[label+id] = true;
+                        if(sparkles.length < 50) sparkles.push({x:tip.x*canvas.width, y:tip.y*canvas.height, l:1.0});
                     }
-                } else if(fingerStates[label + id]) {
+                } else if(fingerStates[label+id]) {
                     synth.releaseAll();
-                    fingerStates[label + id] = false;
-                }
-                
-                if(active && !isFist) {
-                    ctx.fillStyle = "white";
-                    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+                    fingerStates[label+id] = false;
                 }
             });
         });
     }
 
-    // Performance-Safe Animation Loop
+    // Fast Particle Loop
     for (let i = sparkles.length - 1; i >= 0; i--) {
-        let s = sparkles[i];
-        s.x += s.vx; s.y += s.vy; s.l -= 0.02;
+        let s = sparkles[i]; s.l -= 0.05;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
         ctx.fillStyle = `rgba(255, 215, 0, ${s.l})`;
         ctx.beginPath(); ctx.arc(s.x, s.y, 2, 0, Math.PI*2); ctx.fill();
     }
 }
 
-function initTracking() {
+function init() {
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.6 });
     hands.onResults(onResults);
     new Camera(video, {
         onFrame: async () => {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            try { await hands.send({image: video}); } catch(e) {}
+            await hands.send({image: video});
         }, width: 640, height: 480
     }).start();
 }
