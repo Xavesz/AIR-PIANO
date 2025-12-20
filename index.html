@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,26 +10,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;300;600&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #00f2ff; --gold: #ffd700; --bg: #020408; --panel: rgba(255,255,255,0.02); }
+        :root { --accent: #00f2ff; --gold: #ffd700; --bg: #020408; }
         body { margin: 0; background: var(--bg); color: #fff; overflow: hidden; font-family: 'Montserrat', sans-serif; }
         
-        /* High-Performance Canvas */
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
-        /* Professional Executive UI */
+        /* The Professional Entry Stage */
         .ui-layer { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            background: radial-gradient(circle at center, #0a1425 0%, #010204 100%); 
+            background: radial-gradient(circle at center, #0a1a3a 0%, #000 100%); 
             transition: 1s cubic-bezier(0.4, 0, 0.2, 1); text-align: center;
         }
         .hidden { opacity: 0 !important; pointer-events: none; transform: scale(1.05); filter: blur(40px); }
 
+        /* Pulsating Neon Background Core */
+        .neon-pulse-bg {
+            position: absolute; width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 242, 255, 0.15) 0%, transparent 70%);
+            animation: neon-breathing 5s ease-in-out infinite; pointer-events: none;
+        }
+        @keyframes neon-breathing { 0%, 100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.4); opacity: 0.5; } }
+
         .executive-frame {
             position: relative; padding: 60px 40px; border-radius: 4px;
-            background: var(--panel); border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(50px); max-width: 650px; width: 90%;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            box-shadow: 0 0 100px rgba(0, 242, 255, 0.1);
         }
 
         .main-title { font-size: clamp(1.8rem, 7vw, 2.5rem); letter-spacing: 22px; font-weight: 100; text-transform: uppercase; margin: 0; color: #fff; }
@@ -44,14 +52,12 @@
         .gold-pro { border-color: rgba(255,215,0,0.3); color: var(--gold); }
         .gold-pro:hover { border-color: var(--gold); background: rgba(255,215,0,0.08); }
 
-        /* Technical Disclosure & Manual */
-        .disclosure-panel { text-align: left; font-size: 0.75rem; color: #666; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; }
+        .disclosure-panel { text-align: left; font-size: 0.75rem; color: #777; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px; }
         .disclosure-header { color: var(--accent); font-weight: 600; font-size: 0.6rem; letter-spacing: 3px; display: block; margin-bottom: 15px; text-transform: uppercase; }
         .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; color: #999; }
         
         .action-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; border-top: 1px solid #111; padding-top: 20px; }
         .action-link { background: none; border: none; color: #fff; cursor: pointer; font-size: 0.65rem; font-weight: 600; text-decoration: underline; letter-spacing: 1px; }
-        .action-link:hover { color: var(--accent); }
 
         #stage-hud { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-around; z-index: 1100; pointer-events: none; }
         .hud-module { background: rgba(0,0,0,0.8); padding: 10px 30px; border-left: 2px solid var(--accent); font-size: 0.6rem; letter-spacing: 3px; color: #555; transition: 0.3s; }
@@ -61,6 +67,7 @@
 <body>
 
     <div id="menu" class="ui-layer">
+        <div class="neon-pulse-bg"></div>
         <div class="executive-frame">
             <h1 class="main-title">QUANTUM SOUL</h1>
             <div class="sub-designer">DESIGNED BY PRASURJYA DEKA</div>
@@ -102,7 +109,7 @@ const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
 function createMeteor() {
-    if (meteors.length < 6 && Math.random() < 0.04) {
+    if (meteors.length < 7 && Math.random() < 0.05) {
         meteors.push({
             x: Math.random() * canvas.width,
             y: Math.random() * (canvas.height / 3),
@@ -133,8 +140,7 @@ async function sendFeedback() {
     if (!msg) return;
     try {
         await fetch("https://formspree.io/f/mykgkorl", {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST", headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ developer: "Prasurjya Deka", message: msg })
         });
         alert("Transmission successful.");
@@ -168,7 +174,7 @@ function onResults(results) {
                 
                 if(active) {
                     let zone = Math.floor(tip.x * 12);
-                    zone = 11 - zone; // Orientation Alignment
+                    zone = 11 - zone; 
 
                     const hudId = (zone < 6) ? 'l-hud' : 'r-hud';
                     document.getElementById(hudId).classList.add('hud-active');
@@ -181,7 +187,6 @@ function onResults(results) {
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 40) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
-                    // Fingertip Glow Bubbles
                     ctx.shadowBlur = 15;
                     ctx.shadowColor = "#00f2ff";
                     ctx.fillStyle = "#fff";
