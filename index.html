@@ -3,194 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quantum Soul | Angelic Resonance</title>
+    <title>Quantum Soul | Stable Resonance</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --quantum: #bf00ff; --divine: #00f2ff; --soul: #ffaa00; --bg: #020208; }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
+        :root { --divine: #00f2ff; --soul: #ffaa00; --bg: #020205; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: sans-serif; }
         
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); z-index: 1000; transition: 0.8s ease-in-out; }
-        .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
-        
-        .btn { padding: 20px 50px; border: 1px solid var(--divine); background: transparent; color: var(--divine); cursor: pointer; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; transition: 0.4s; }
-        .btn:hover { background: var(--divine); color: #000; box-shadow: 0 0 50px var(--divine); transform: scale(1.05); }
+        /* Mirroring Fix */
+        #output_canvas, #input_video { 
+            transform: scaleX(-1); /* Flips camera to act like a mirror */
+            width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; 
+        }
 
-        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 30px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
+        .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); transition: 0.5s; }
+        .hidden { display: none !important; }
         
-        #coherence-meter { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; z-index: 500; }
-        .meter-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 10px; overflow: hidden; }
-        #meter-fill { width: 0%; height: 100%; background: var(--divine); transition: 0.3s; box-shadow: 0 0 15px var(--divine); }
-
-        .manual-card { background: rgba(255,255,255,0.02); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin: 20px; max-width: 450px; backdrop-filter: blur(10px); }
-        .manual-card h3 { color: var(--divine); margin-top: 0; letter-spacing: 2px; }
-        .manual-card ul { padding-left: 20px; color: #ccc; }
-        .manual-card li { margin-bottom: 10px; }
+        .btn { padding: 15px 40px; border: 2px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; }
+        
+        #hud { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; z-index: 500; box-sizing: border-box; pointer-events: none; }
+        .stat-box { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 10px; border: 1px solid var(--divine); }
+        
+        #manual { max-width: 400px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; font-size: 0.9rem; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 3.5rem; letter-spacing: 15px; margin-bottom: 10px;">QUANTUM <span style="color:var(--divine)">SOUL</span></h1>
-        <div class="manual-card">
-            <h3>USER MANUAL: COHERENCE STAGE</h3>
-            <ul>
-                <li>🖐 <b>ANGELIC MODE:</b> Move fingers to trigger high-frequency physics tones.</li>
-                <li>✊ <b>RIGHT FIST:</b> Increase <b>Coherence</b>. Two waves overlap to create a massive, powerful sound.</li>
-                <li>✊ <b>LEFT FIST:</b> Lower sound intensity for delicate, ghostly textures.</li>
-                <li>✊✊ <b>BOTH FISTS:</b> The <b>Divine Soul State</b>. Deeply nostalgic, nostalgic quantum resonance.</li>
-                <li>🖐🖐 <b>OPEN BOTH:</b> Instantly return to standard Angelic Mode.</li>
-            </ul>
+    <div id="menu" class="ui-layer">
+        <h1 style="letter-spacing:10px">QUANTUM <span style="color:var(--divine)">SOUL</span></h1>
+        <div id="manual">
+            <b>STABILITY MANUAL:</b><br>
+            • 🖐 <b>Angelic Mode:</b> Open fingers to play crystal tones.<br>
+            • ✊ <b>Right Fist:</b> Overlap waves for <b>High Coherence</b> (Loud/Powerful).<br>
+            • ✊ <b>Left Fist:</b> Destructive interference (Low/Ghostly).<br>
+            • ✊✊ <b>Both Fists:</b> Divine Nostalgic Soul state.<br>
+            • 🖐🖐 <b>Reset:</b> Open both hands to return to normal.
         </div>
-        <button class="btn" onclick="initQuantumStage()">INITIATE RESONANCE</button>
+        <button class="btn" onclick="startApp()">START STAGE</button>
     </div>
 
-    <div id="hud-top" class="hidden">
-        <button class="btn" style="padding: 10px 25px; font-size: 0.6rem;" onclick="location.reload()">TERMINATE</button>
-        <div style="text-align: right">
-            <div id="state-text" style="color: var(--divine); font-weight: bold; letter-spacing: 3px; font-size: 1.2rem;">ANGELIC MODE</div>
-            <div id="hand-count" style="font-size: 0.7rem; color: #888; margin-top: 5px;">QUANTUM COHERENCE: 0%</div>
-        </div>
-    </div>
-
-    <div id="coherence-meter" class="hidden">
-        <div style="font-size: 0.7rem; letter-spacing: 2px; opacity: 0.8;">RESONANCE AMPLITUDE</div>
-        <div class="meter-bg"><div id="meter-fill"></div></div>
+    <div id="hud" class="hidden">
+        <div class="stat-box" id="state-text">ANGELIC MODE</div>
+        <div class="stat-box" id="fps-text">TRACKING...</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
-    <video id="input_video" style="display:none" playsinline></video>
+    <video id="input_video" playsinline></video>
 
 <script>
-let synth, lfo, filter, isLive = false;
-let coherence = 0; // 0 to 1
+let synth, isLive = false, coherence = 0;
 let fingerStates = {}, ripples = [];
 
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-async function initQuantumStage() {
-    await Tone.start();
-    
-    // NOSTALGIC SOUL ENGINE (FM + ANALOG JITTER)
-    filter = new Tone.LowpassCombFilter(0.1, 0.5, 3000).toDestination();
-    const reverb = new Tone.Reverb({ decay: 5, wet: 0.6 }).connect(filter);
-    
-    synth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 2,
-        modulationIndex: 2,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.4, release: 2 },
-        modulation: { type: "square" }
-    }).connect(reverb);
-
-    document.getElementById('menu-main').classList.add('hidden');
-    document.querySelectorAll('#hud-top, #coherence-meter').forEach(el => el.classList.remove('hidden'));
-    
-    isLive = true;
-    startCamera();
+async function startApp() {
+    try {
+        await Tone.start();
+        // Crash-Proof Synth: Low CPU FM
+        synth = new Tone.PolySynth(Tone.FMSynth).toDestination();
+        synth.set({ harmonicity: 2, modulationIndex: 5, envelope: { attack: 0.2, release: 1 } });
+        
+        document.getElementById('menu').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        isLive = true;
+        initTracking();
+    } catch (e) { alert("Audio Error: Please interact with screen first."); }
 }
 
 function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Render Soul Ripples
-    ripples.forEach((r, i) => {
-        r.rad += 2.5; r.alpha -= 0.012;
-        ctx.strokeStyle = `rgba(${r.r}, ${r.g}, ${r.b}, ${r.alpha})`;
-        ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
-        if(r.alpha <= 0) ripples.splice(i, 1);
-    });
-
     let rf = false, lf = false;
-    let handCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-    document.getElementById('hand-count').innerText = `QUANTUM COHERENCE: ${Math.round(coherence * 100)}%`;
+    let streamHTML = "";
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const label = results.multiHandedness[i].label; // Mirrored
+            // MIRROR FIX: We swap the label because CSS is scaling -1
+            const side = results.multiHandedness[i].label === "Left" ? "Left" : "Right";
             const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.13;
-            
-            if(isFist) { if(label === "Left") lf = true; else rf = true; }
+            if(isFist) { if(side === "Right") rf = true; else lf = true; }
 
-            // Quantum Interactions
-            [8, 12, 16, 20].forEach((id, fIdx) => {
+            [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
-                const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
+                const x = tip.x * canvas.width;
+                const y = tip.y * canvas.height;
                 const active = tip.y > lm[id-1].y;
 
                 if(active && !isFist) {
-                    const notes = ['C3','E3','G3','B3','C4','E4','G4','B4','D5','F5'];
-                    const nIdx = Math.floor((1-tip.x) * (notes.length-1));
-                    const note = notes[nIdx];
-
-                    if(!fingerStates[`${label}_${id}`]) {
-                        // Volume and Timbre scale with Coherence
-                        let vol = -15 + (coherence * 10);
-                        synth.triggerAttackRelease(note, "1n", undefined, Tone.dbToGain(vol));
-                        
-                        // Particle Color based on state
-                        let color = coherence > 0.8 ? {r:255, g:170, b:0} : {r:0, g:242, b:255};
-                        ripples.push({x, y, rad: 5, alpha: 0.8, ...color});
-                        fingerStates[`${label}_${id}`] = true;
+                    const note = ['C4','E4','G4','B4','D5'][Math.floor(tip.x * 4)];
+                    if(!fingerStates[`${side}_${id}`]) {
+                        synth.triggerAttackRelease(note, "4n", undefined, Tone.dbToGain(-15 + (coherence*10)));
+                        ripples.push({x, y, r: 5, a: 0.8});
+                        fingerStates[`${side}_${id}`] = true;
                     }
-                } else { fingerStates[`${label}_${id}`] = false; }
+                } else { fingerStates[`${side}_${id}`] = false; }
                 
-                ctx.fillStyle = active ? (coherence > 0.8 ? "var(--soul)" : "var(--divine)") : "white";
-                ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = active ? (coherence > 0.8 ? "#ffaa00" : "#00f2ff") : "white";
+                ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
             });
         });
     }
 
-    // UPDATE QUANTUM STATE MACHINE
+    // UPDATE PHYSICS
     const stateLabel = document.getElementById('state-text');
-    const meterFill = document.getElementById('meter-fill');
-
     if(rf && lf) {
-        currentMode = "DIVINE SOUL";
-        coherence = Math.min(coherence + 0.01, 1.0);
+        coherence = Math.min(coherence + 0.02, 1);
         stateLabel.innerText = "DIVINE SOUL STATE";
-        stateLabel.style.color = "var(--soul)";
-        synth.set({ modulationIndex: 25, harmonicity: 1.01 }); // Deep Soul vibration
+        stateLabel.style.color = "#ffaa00";
     } else if(rf) {
-        coherence = Math.min(coherence + 0.005, 0.7);
-        stateLabel.innerText = "CONSTRUCTIVE INTERFERENCE";
-        stateLabel.style.color = "var(--divine)";
-        synth.set({ modulationIndex: 10, harmonicity: 2 });
-    } else if(lf) {
-        coherence = Math.max(coherence - 0.005, 0.1);
-        stateLabel.innerText = "DESTRUCTIVE INTERFERENCE";
-        stateLabel.style.color = "#ff3333";
-        synth.set({ modulationIndex: 1, harmonicity: 4 });
+        coherence = Math.min(coherence + 0.01, 0.7);
+        stateLabel.innerText = "HIGH COHERENCE";
+        stateLabel.style.color = "#00f2ff";
     } else {
-        // Naturally decay coherence unless holding fists
-        coherence = Math.max(coherence - 0.002, 0);
+        coherence = Math.max(coherence - 0.01, 0);
         if(coherence < 0.1) {
             stateLabel.innerText = "ANGELIC MODE";
-            stateLabel.style.color = "var(--divine)";
-            synth.set({ modulationIndex: 2, harmonicity: 2 });
+            stateLabel.style.color = "white";
         }
     }
-    meterFill.style.width = (coherence * 100) + "%";
+
+    // DRAW RIPPLES
+    ripples.forEach((r, i) => {
+        r.r += 2; r.a -= 0.02;
+        ctx.strokeStyle = `rgba(0, 242, 255, ${r.a})`;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+        if(r.a <= 0) ripples.splice(i, 1);
+    });
 }
 
-const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-handTracker.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
-handTracker.onResults(onResults);
+// CRASH-PROOF TRACKER
+function initTracking() {
+    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    // modelComplexity: 0 is the secret to iPad/Android Tablet stability
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.6 });
+    hands.onResults(onResults);
 
-function startCamera() {
-    new Camera(video, {
+    const camera = new Camera(video, {
         onFrame: async () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            await handTracker.send({image: video});
+            try { await hands.send({image: video}); } catch(e) { console.log("Frame Skip"); }
         },
-        width: 1280, height: 720
-    }).start();
+        width: 640, height: 480 // Lower resolution prevents mobile CPU crashes
+    });
+    camera.start();
 }
 </script>
 </body>
