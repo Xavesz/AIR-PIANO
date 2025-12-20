@@ -31,8 +31,6 @@
         .pane { background: #0a0a0a; padding: 40px; border-radius: 15px; width: 85%; max-height: 75%; overflow-y: auto; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .row { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; border-bottom: 1px solid #222; padding-bottom: 15px; }
         .key-scroll { height: 110px; overflow-y: auto; border: 1px solid #444; padding: 8px; background: #000; border-radius: 6px; width: 140px; }
-        .key-option { padding: 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
-        .key-option:hover, .key-option.selected { background: var(--neon); color: #000; font-weight: bold; }
         
         #manual-overlay { position: absolute; bottom: 30px; right: 30px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; font-size: 0.8rem; border: 1px solid #444; z-index: 500; }
     </style>
@@ -137,7 +135,7 @@ function backToMenu() { location.reload(); }
 
 const mixer = document.getElementById('mixer-content');
 ['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((name, i) => {
-    mixer.innerHTML += `<div class="row"><span>${name}</span><input type="range" min="-30" max="0" value="-6" onchange="fingerVols[${i}]=this.value"><div class="key-scroll">${notes.map(n => `<div class="key-option ${n==fingerNotes[i]?'selected':''}" onclick="updateFingerNote(${i},'${n}',this)">${n}</div>`).join('')}</div><button class="btn" style="padding:8px" onclick="testNote(${i})">🔊</button></div>`;
+    mixer.innerHTML += `<div class="row"><span>${name}</span><input type="range" min="-30" max="0" value="-6" onchange="fingerVols[${i}]=this.value"><div class="key-scroll">${notes.map(n => `<div class="key-option ${n==fingerNotes[i]?'selected':''}" onclick="updateFingerNote(${idx = i},'${n}',this)">${n}</div>`).join('')}</div><button class="btn" style="padding:8px" onclick="testNote(${i})">🔊</button></div>`;
 });
 
 async function updateFingerNote(idx, note, el) {
@@ -193,7 +191,6 @@ function onResults(results) {
                     }
                 } else { fingerStates[`${side}_${id}`] = false; }
                 ctx.fillStyle = isBent ? "var(--play)" : "white";
-                ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle;
                 ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
             });
         });
@@ -208,7 +205,6 @@ function onResults(results) {
         document.getElementById('rec-timer').innerText = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
     }
 
-    // GESTURE ENGINE
     if(recHand && !playHand && currentMode !== 'PLAYING') {
         if(!rFistStart) rFistStart = now;
         let elap = Math.floor((now-rFistStart)/1000);
@@ -222,7 +218,7 @@ function onResults(results) {
     } else if(playHand && !recHand && currentMode==='STOP' && recording.length > 0) {
         if(!lFistStart) lFistStart = now;
         box.classList.remove('hidden'); circle.parentElement.style.display="none";
-        val.innerText = 3-Math.floor((now-lFistStart)/1000); msg.innerText = "PREPARING...";
+        val.innerText = 3-Math.floor((now-lFistStart)/1000); msg.innerText = "STARTING...";
         if(now-lFistStart >= 3000) {
             currentMode='PLAYING'; val.innerText = ""; msg.innerText = "PLAYING";
             circle.parentElement.style.display="block";
@@ -240,34 +236,33 @@ function onResults(results) {
     } else if(bf) { 
         if(!bothFistStart) bothFistStart = now;
         box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothFistStart)/1000);
-        msg.innerText = "WIPING SESSION";
-        if(now-bothFistStart >= 5000) { recording=[]; currentMode='PERFORM'; bothFistStart=now+2000; box.classList.add('hidden'); document.getElementById('rec-timer').innerText="00:00"; }
+        msg.innerText = "RESETTING SESSION";
+        if(now-bothFistStart >= 5000) { recording=[]; currentMode='PERFORM'; bothFistStart=now+2000; box.classList.add('hidden'); }
     } else if(bo && currentMode==='STOP' && recording.length > 0) { 
         if(!bothOpenStart) bothOpenStart = now;
         box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothOpenStart)/1000);
-        msg.innerText = "SAVING TO LIBRARY";
+        msg.innerText = "SAVING...";
         if(now-bothOpenStart >= 5000) { 
             library.push({name: "Performance_"+new Date().toLocaleTimeString(), data: [...recording]}); 
             bothOpenStart=now+2000; val.innerText="SAVED"; 
-            setTimeout(()=>box.classList.add('hidden'),1000); 
+            setTimeout(()=> { box.classList.add('hidden'); renderLibrary(); }, 1000); 
         }
     } else if(currentMode !== 'PLAYING') {
         rFistStart = lFistStart = bothFistStart = bothOpenStart = 0;
         box.classList.add('hidden');
     }
-    document.getElementById('mode-pill').innerText = currentMode;
-    document.getElementById('live-notes').innerHTML = liveHTML || "Engine Idle";
 }
 
 function renderLibrary() {
     const lib = document.getElementById('library-content');
-    if(library.length === 0) { lib.innerHTML = "<p>No recordings yet. Record something in the Stage!</p>"; return; }
+    if(library.length === 0) { lib.innerHTML = "<p>No recordings yet. Save one in the Stage!</p>"; return; }
     lib.innerHTML = library.map((t, i) => `
         <div class="row">
             <span>${t.name}</span>
             <div style="display:flex; gap:10px;">
                 <button class="btn" style="padding:8px" onclick="playLib(${i})">PLAY</button>
-                <button class="btn" style="padding:8px; border-color:white; color:white;" onclick="downloadSession(${i})">SAVE FILE</button>
+                <button class="btn" style="padding:8px; border-color:var(--play); color:var(--play);" onclick="shareSession(${i})">SHARE</button>
+                <button class="btn" style="padding:8px; border-color:white; color:white;" onclick="downloadSession(${i})">DOWNLOAD</button>
             </div>
         </div>`).join('');
 }
@@ -282,6 +277,20 @@ function downloadSession(i) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `${library[i].name}.json`; a.click();
+}
+
+async function shareSession(i) {
+    const shareData = {
+        title: 'Air Piano Pro Session',
+        text: `Check out my Air Piano performance: ${library[i].name}`,
+        url: window.location.href
+    };
+    try {
+        await navigator.share(shareData);
+    } catch (err) {
+        alert("Sharing link copied to clipboard!");
+        navigator.clipboard.writeText(window.location.href);
+    }
 }
 
 const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
