@@ -10,86 +10,81 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --stop: #ffa500; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
         
-        body { margin: 0; background: #020c1b; color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        /* Professional UI Layers */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,5,10,0.98); z-index: 1000; transition: all 0.4s ease; }
+        .hidden { opacity: 0; pointer-events: none; display: none !important; }
         
-        /* Background Wallpaper Engine */
-        #bg-canvas { position: absolute; width: 100vw; height: 100vh; object-fit: cover; z-index: 1; filter: brightness(0.4); transition: filter 0.3s; }
-        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; pointer-events: none; }
-        
-        /* UI Layers */
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(5,10,20,0.95); z-index: 1000; }
-        .hidden { display: none !important; }
-        
-        /* OSU Style Buttons */
-        .btn { padding: 14px 30px; border: 2px solid var(--neon); background: rgba(0,0,0,0.5); color: var(--neon); cursor: pointer; border-radius: 50px; font-weight: bold; margin: 10px; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
-        .btn:hover { transform: scale(1.05); background: var(--neon); color: black; box-shadow: 0 0 30px var(--neon); }
+        .btn { padding: 14px 30px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 25px var(--neon); }
+        .btn-play { background: var(--play); border-color: var(--play); color: black; font-size: 1.4rem; }
 
-        /* Command Center (OSU Style HUD) */
-        #side-dash { position: absolute; top: 100px; left: 20px; width: 260px; background: rgba(0,0,0,0.8); border-left: 5px solid var(--neon); padding: 20px; z-index: 500; border-radius: 0 15px 15px 0; }
-        .hud-note { font-family: 'Courier New', monospace; font-size: 1rem; color: var(--neon); margin: 5px 0; border-bottom: 1px solid rgba(0,242,255,0.2); }
-
-        /* VLC Style Library */
-        .pane { background: #111; padding: 30px; border-radius: 15px; width: 85%; max-height: 70%; overflow-y: auto; border: 1px solid #333; }
-        .vlc-track { background: #1a1a1a; padding: 20px; margin: 15px 0; border-radius: 10px; border: 1px solid #444; }
-        .vlc-scrubber { width: 100%; height: 10px; accent-color: var(--play); cursor: pointer; margin: 15px 0; }
-
-        /* Massive Countdown HUD */
+        /* HUD & Dashboard */
+        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 20px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
+        #side-dash { position: absolute; top: 100px; left: 20px; width: 220px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--neon); padding: 15px; z-index: 500; pointer-events: none; font-family: monospace; }
+        
         #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 900; text-align: center; pointer-events: none; }
-        #timer-msg { font-size: 4rem; font-weight: 900; letter-spacing: 15px; text-shadow: 0 0 20px rgba(0,0,0,1); }
-        #timer-val { font-size: 15rem; font-weight: 900; line-height: 1; margin-top: -20px; }
+        #timer-val { font-size: 10rem; font-weight: bold; line-height: 1; }
+
+        .pane { background: #111; padding: 30px; border-radius: 8px; width: 85%; max-height: 70%; overflow-y: auto; border: 1px solid #333; }
+        .row { display: flex; align-items: center; justify-content: space-between; margin: 15px 0; border-bottom: 1px solid #222; padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <img id="bg-canvas" src="" alt="">
-
     <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 4rem; letter-spacing: 15px; text-shadow: 0 0 20px var(--neon);">AIR PIANO PRO</h1>
-        <button class="btn" style="font-size: 1.5rem; border-color: var(--play); color: var(--play);" onclick="launchPerformance()">Launch Stage</button>
-        <div style="display:flex;">
-            <button class="btn" onclick="showPane('settings')">Settings</button>
-            <button class="btn" onclick="showPane('library')">Library</button>
+        <h1 style="font-size: 3.5rem; letter-spacing: 15px; margin-bottom: 0;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
+        <p style="color: #666; margin-bottom: 40px;">THE ULTIMATE AIR-GESTURE INSTRUMENT</p>
+        
+        <button class="btn btn-play" onclick="launchPerformance()">Launch Stage</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn" onclick="showPane('settings')">Mixer & Keys</button>
+            <button class="btn" onclick="showPane('library')">Saved Library</button>
         </div>
-        <button class="btn" onclick="shareApp()">Share App Link</button>
+        <button class="btn" style="border-color:#555; color:#555" onclick="showPane('how-to')">How to Play</button>
     </div>
 
     <div id="menu-settings" class="ui-layer hidden">
         <div class="pane">
-            <h3>GAME SETTINGS</h3>
-            <div style="margin:20px 0;">
-                <p>Upload Background Wallpaper:</p>
-                <input type="file" id="bg-upload" accept="image/*" class="btn">
-            </div>
-            <div style="margin:20px 0;">
-                <p>Background Brightness:</p>
-                <input type="range" min="0" max="1" step="0.1" value="0.4" onchange="document.getElementById('bg-canvas').style.filter = `brightness(${this.value})`" style="width:100%">
-            </div>
+            <h3>MASTER MIXER & KEY ASSIGNMENT</h3>
             <div id="mixer-content"></div>
         </div>
         <button class="btn" onclick="showPane('main')">Save & Return</button>
     </div>
 
     <div id="menu-library" class="ui-layer hidden">
-        <div class="pane">
-            <h3>SAVED TUNES (VLC PLAYER)</h3>
-            <div id="library-content">No tracks found.</div>
+        <div class="pane" id="library-content">
+            <h3>SAVED RECORDINGS</h3>
+            <p id="lib-empty">No tracks found. Save one during performance!</p>
         </div>
-        <button class="btn" onclick="showPane('main')">Close</button>
+        <button class="btn" onclick="showPane('main')">Back to Menu</button>
     </div>
 
-    <div id="hud-top" class="hidden" style="position: absolute; top:0; width:100%; display:flex; justify-content:space-between; padding:20px; z-index:600;">
-        <button class="btn" style="margin:0; padding: 5px 20px;" onclick="location.reload()">BACK TO MENU</button>
-        <div id="mode-pill" style="border: 2px solid var(--neon); padding: 5px 20px; color: var(--neon); font-weight: bold; background: black; border-radius: 50px;">PERFORMING</div>
+    <div id="menu-how-to" class="ui-layer hidden">
+        <div class="pane">
+            <h2>GESTURE GUIDE</h2>
+            <p>🔴 <b>Right Fist (3s):</b> Record / Stop</p>
+            <p>🟢 <b>Left Fist (3s):</b> Play Loop</p>
+            <p>🔵 <b>Both Hands Wide (7s):</b> Save to PC/Phone</p>
+            <p>🟣 <b>Both Fists (5s):</b> Wipe / New Session</p>
+            <button class="btn" onclick="showPane('main')">Got it</button>
+        </div>
+    </div>
+
+    <div id="hud-top" class="hidden">
+        <button class="btn" style="margin:0; padding: 5px 15px;" onclick="backToMenu()">EXIT TO MENU</button>
+        <div id="mode-pill" style="border: 1px solid var(--neon); padding: 5px 15px; color: var(--neon); font-weight: bold;">PERFORMING</div>
     </div>
 
     <div id="side-dash" class="hidden">
-        <div style="color: var(--neon); font-size: 0.7rem; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px;">LIVE HUD</div>
-        <div id="live-notes">WAITING FOR INPUT...</div>
+        <div style="color: var(--neon); font-size: 0.7rem; margin-bottom: 10px;">ENGINE STATUS</div>
+        <div id="live-notes">Waiting for input...</div>
     </div>
 
     <div id="countdown-box" class="hidden">
-        <div id="timer-msg">RECORDING</div>
+        <div id="timer-msg" style="letter-spacing: 5px;">RECORDING</div>
         <div id="timer-val">3</div>
     </div>
 
@@ -107,17 +102,12 @@ const video = document.getElementById('input_video');
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 
-// Wallpaper Upload Logic
-document.getElementById('bg-upload').onchange = (e) => {
-    const file = e.target.files[0];
-    const url = URL.createObjectURL(file);
-    document.getElementById('bg-canvas').src = url;
-};
-
+// --- APP ROUTING ---
 async function launchPerformance() {
     if(!synth) { await Tone.start(); synth = new Tone.PolySynth(Tone.Synth).toDestination(); }
     document.getElementById('menu-main').classList.add('hidden');
-    document.querySelectorAll('.hidden').forEach(el => el.classList.remove('hidden'));
+    document.getElementById('hud-top').classList.remove('hidden');
+    document.getElementById('side-dash').classList.remove('hidden');
     isLive = true;
     startCamera();
 }
@@ -128,20 +118,29 @@ function showPane(pane) {
     if(pane === 'library') renderLibrary();
 }
 
-function shareApp() {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Share link copied! Send to your friends.");
+function backToMenu() {
+    isLive = false;
+    document.getElementById('hud-top').classList.add('hidden');
+    document.getElementById('side-dash').classList.add('hidden');
+    document.getElementById('menu-main').classList.remove('hidden');
 }
 
-// (MIXER & LOGIC REMAINS AS REQUESTED)
+// --- MIXER GENERATOR ---
 const mixer = document.getElementById('mixer-content');
 ['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((name, i) => {
-    mixer.innerHTML += `<div style="display:flex; justify-content:space-between; margin:10px 0; border-bottom:1px solid #222; padding:5px;">
-        <span>${name} Mixer</span>
-        <button class="btn" style="padding:5px 15px" onclick="synth.triggerAttackRelease('${notes[i]}','8n')">TEST</button>
+    mixer.innerHTML += `<div class="row">
+        <span>${name}</span>
+        <input type="range" min="-30" max="0" value="-6" onchange="fingerVols[${i}]=this.value">
+        <select onchange="fingerNotes[${i}]=this.value">${notes.map(n=>`<option ${n==notes[i]?'selected':''}>${n}</option>`).join('')}</select>
+        <button class="btn" style="padding:5px 10px" onclick="testNote(${i})">TEST</button>
     </div>`;
 });
 
+function testNote(i) {
+    synth.triggerAttackRelease(fingerNotes[i], "8n", undefined, Tone.dbToGain(fingerVols[i]));
+}
+
+// --- PHYSICS & LOGIC ---
 function isClenched(lm) {
     const d = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y);
     return d < 0.14;
@@ -152,10 +151,22 @@ function onResults(results) {
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Wave Interference Animation
     ripples.forEach((r, i) => {
         r.rad += 3.5; r.alpha -= 0.015;
         ctx.strokeStyle = `hsla(${r.hue}, 80%, 60%, ${r.alpha})`;
-        ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        
+        ripples.forEach((other, j) => {
+            if(i !== j) {
+                const dist = Math.hypot(r.x - other.x, r.y - other.y);
+                if(dist < r.rad + other.rad) { // Young's Interference Point
+                    ctx.fillStyle = `rgba(255,255,255,${r.alpha})`;
+                    ctx.beginPath(); ctx.arc((r.x+other.x)/2, (r.y+other.y)/2, 4, 0, Math.PI*2); ctx.fill();
+                }
+            }
+        });
         if(r.alpha <= 0) ripples.splice(i, 1);
     });
 
@@ -173,12 +184,14 @@ function onResults(results) {
                 const tip = lm[id];
                 const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
                 const isBent = tip.y > lm[id-1].y;
+                
                 if(isBent && !clench) {
                     const noteIdx = Math.floor((1-tip.x) * (notes.length-1));
                     const note = notes[noteIdx];
-                    liveHTML += `<div class="hud-note">${side} Finger → ${note}</div>`;
+                    liveHTML += `<div style="color:var(--neon)">${side} Finger -> ${note}</div>`;
+                    
                     if(!fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                        synth.triggerAttackRelease(note, "4n");
+                        synth.triggerAttackRelease(note, "4n", undefined, Tone.dbToGain(fingerVols[fIdx + (side==='Right'?5:0)]));
                         ripples.push({x, y, rad: 5, alpha: 1.0, hue: noteIdx*20});
                         if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
                         fingerStates[`${side}_${id}`] = true;
@@ -190,8 +203,9 @@ function onResults(results) {
         });
         if(rf && lf) bf = true;
     }
-    document.getElementById('live-notes').innerHTML = liveHTML || "SCANNING...";
+    document.getElementById('live-notes').innerHTML = liveHTML || "Ready...";
 
+    // --- STATE MACHINE ---
     const now = Date.now(), box = document.getElementById('countdown-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg');
 
     if(rf && !lf) {
@@ -205,37 +219,35 @@ function onResults(results) {
         box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistStart)/1000);
         msg.innerText = "PLAYING"; val.style.color = "var(--play)";
         if(now-lFistStart >= 3000) { currentMode='PLAY'; box.classList.add('hidden'); recording.forEach(e=>setTimeout(()=>synth.triggerAttackRelease(e.note,"4n"), e.time)); setTimeout(()=>currentMode='STOP', (recording[recording.length-1]?.time||0)+1000); lFistStart=now+5000; }
+    } else if(bf && currentMode==='STOP') {
+        if(!bothFistStart) bothFistStart = now;
+        box.classList.remove('hidden'); val.innerText = 5-Math.floor((now-bothFistStart)/1000);
+        msg.innerText = "NEW SESSION"; val.style.color = "var(--new)";
+        if(now-bothFistStart >= 5000) { recording=[]; currentMode='PERFORM'; bothFistStart=now+5000; }
     } else if(results.multiHandLandmarks?.length === 2 && bo && currentMode==='STOP') {
         if(!bothOpenStart) bothOpenStart = now;
-        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-bothOpenStart)/1000);
+        box.classList.remove('hidden'); val.innerText = 7-Math.floor((now-bothOpenStart)/1000);
         msg.innerText = "SAVING"; val.style.color = "var(--neon)";
-        if(now-bothOpenStart >= 3000) { library.push({name: "Performance_"+Date.now(), data: [...recording]}); bothOpenStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
-    } else { rFistStart = lFistStart = bothOpenStart = 0; box.classList.add('hidden'); }
+        if(now-bothOpenStart >= 7000) { library.push({name: "Tune_"+Date.now(), data: [...recording]}); bothOpenStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
+    } else { rFistStart = lFistStart = bothFistStart = bothOpenStart = 0; box.classList.add('hidden'); }
     document.getElementById('mode-pill').innerText = currentMode;
     ctx.restore();
 }
 
 function renderLibrary() {
     const container = document.getElementById('library-content');
-    if(library.length === 0) { container.innerHTML = "<p>Library Empty.</p>"; return; }
-    container.innerHTML = library.map((t, i) => `
-        <div class="vlc-track">
-            <span>Track ${i+1}</span>
-            <input type="range" class="vlc-scrubber" value="0">
-            <div style="display:flex; gap:10px;">
-                <button class="btn" style="padding:5px 15px" onclick="playLib(${i})">PLAY VLC</button>
-                <button class="btn" style="padding:5px 15px; border-color:white; color:white;" onclick="downloadTune(${i})">SAVE TO DEVICE</button>
-            </div>
+    if(library.length === 0) { container.innerHTML = "<h3>SAVED RECORDINGS</h3><p>Empty.</p>"; return; }
+    container.innerHTML = "<h3>SAVED RECORDINGS</h3>" + library.map((t, i) => `
+        <div class="row">
+            <span>${t.name}</span>
+            <button class="btn" style="padding:5px 10px" onclick="playLib(${i})">PLAY VLC</button>
+            <button class="btn" style="padding:5px 10px; border-color:#fff; color:#fff" onclick="shareLib()">SHARE</button>
         </div>
     `).join('');
 }
 
 function playLib(i) { library[i].data.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time)); }
-function downloadTune(i) {
-    const blob = new Blob([JSON.stringify(library[i].data)], {type: 'text/plain'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `tune-${i+1}.txt`; a.click();
-}
+function shareLib() { navigator.clipboard.writeText(window.location.href); alert("App Link Copied! Share this with your friends."); }
 
 const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
 handTracker.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
@@ -244,3 +256,4 @@ function startCamera() { new Camera(video, { onFrame: async () => { canvas.width
 </script>
 </body>
 </html>
+
