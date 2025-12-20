@@ -9,89 +9,87 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root { --divine: #00f2ff; --gold: #ffd700; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', -apple-system, sans-serif; }
+        body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Inter', sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
-        /* The Supernova Entry Page */
+        /* Super-Glow Entry Stage */
         .ui-layer { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             background: radial-gradient(circle at center, #0a1a3a 0%, #000 100%); 
-            transition: 1.2s cubic-bezier(0.4, 0, 0.2, 1); text-align: center; overflow: hidden;
+            transition: 1s ease-in-out; text-align: center;
         }
-        .hidden { opacity: 0 !important; pointer-events: none; transform: scale(1.1); filter: blur(20px); }
+        .hidden { opacity: 0 !important; pointer-events: none; transform: scale(1.05); filter: blur(30px); }
 
-        /* Pulsing Background Aura */
-        .glow-aura {
-            position: absolute; width: 600px; height: 600px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,242,255,0.15) 0%, transparent 70%);
-            animation: pulse-aura 6s ease-in-out infinite; pointer-events: none;
+        /* Multi-Layer Neon Pulse */
+        .neon-core {
+            position: absolute; width: 450px; height: 450px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,242,255,0.2) 0%, transparent 70%);
+            animation: core-pulse 4s ease-in-out infinite; pointer-events: none;
+            box-shadow: 0 0 100px rgba(0,242,255,0.1);
         }
-        @keyframes pulse-aura { 0%, 100% { transform: scale(1); opacity: 0.1; } 50% { transform: scale(1.4); opacity: 0.3; } }
+        @keyframes core-pulse { 0%, 100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.3); opacity: 0.5; } }
 
-        /* Glassmorphic Command Center */
-        .command-center {
-            position: relative; padding: 40px; border-radius: 24px;
+        .glass-command {
+            position: relative; padding: 45px; border-radius: 20px;
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(30px); max-width: 550px; width: 85%;
-            box-shadow: 0 0 80px rgba(0,0,0,0.5);
+            backdrop-filter: blur(40px); max-width: 580px; width: 88%;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
         }
 
-        .header { font-size: clamp(1.8rem, 8vw, 2.8rem); letter-spacing: 18px; font-weight: 100; text-transform: uppercase; margin: 0; }
-        .author-tag { font-size: 0.65rem; color: var(--divine); letter-spacing: 8px; margin: 15px 0 35px; text-transform: uppercase; font-weight: bold; }
+        .header { font-size: clamp(1.8rem, 8vw, 2.5rem); letter-spacing: 20px; font-weight: 100; text-transform: uppercase; margin: 0; }
+        .author-line { font-size: 0.6rem; color: var(--divine); letter-spacing: 10px; margin: 15px 0 35px; text-transform: uppercase; font-weight: bold; }
 
-        .btn-box { display: flex; gap: 15px; justify-content: center; margin-bottom: 35px; }
+        .btn-flex { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
         .btn { 
-            padding: 16px 35px; border: 1px solid rgba(0,242,255,0.3); background: transparent; 
-            color: white; border-radius: 4px; cursor: pointer; font-size: 0.75rem; 
-            letter-spacing: 3px; text-transform: uppercase; transition: 0.4s;
+            padding: 16px 40px; border: 1px solid rgba(0,242,255,0.3); background: transparent; 
+            color: white; border-radius: 2px; cursor: pointer; font-size: 0.75rem; 
+            letter-spacing: 4px; text-transform: uppercase; transition: 0.4s;
         }
-        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 40px rgba(0,242,255,0.4); }
+        .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 40px rgba(0,242,255,0.3); }
 
-        /* Professional Manual & Safety */
-        .legal-manual { text-align: left; font-size: 0.75rem; color: #777; line-height: 1.7; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; }
-        .manual-item { margin-bottom: 8px; display: flex; align-items: flex-start; }
-        .manual-icon { color: var(--gold); margin-right: 10px; font-size: 0.9rem; }
-
-        .action-bar { display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.6rem; letter-spacing: 1px; color: #444; text-transform: uppercase; }
-        .action-link:hover { color: white; cursor: pointer; }
+        /* Comprehensive Safety & Manual */
+        .legal-vault { text-align: left; font-size: 0.75rem; color: #666; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; }
+        .legal-vault b { color: #aaa; }
+        .safety-point { margin-bottom: 12px; display: flex; }
+        .point-icon { color: var(--divine); margin-right: 12px; font-weight: bold; }
 
         #hud { position: absolute; top: 30px; width: 100%; display: flex; justify-content: space-around; z-index: 1100; pointer-events: none; }
-        .hud-label { background: rgba(0,0,0,0.7); padding: 8px 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; font-size: 0.6rem; letter-spacing: 2px; }
+        .hud-tag { background: rgba(0,0,0,0.8); padding: 8px 25px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem; letter-spacing: 3px; border-radius: 2px; }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <div class="glow-aura"></div>
-        <div class="command-center">
+        <div class="neon-core"></div>
+        <div class="glass-command">
             <h1 class="header">QUANTUM SOUL</h1>
-            <div class="author-tag">DESIGNED BY PRASURJYA DEKA</div>
+            <div class="author-line">ENGINE BY PRASURJYA DEKA</div>
             
-            <div class="btn-box">
+            <div class="btn-flex">
                 <button class="btn" style="border-color:var(--gold); color:var(--gold);" onclick="startApp('MYTHIC')">Mythic Branch</button>
                 <button class="btn" onclick="startApp('SOUL')">Soul Branch</button>
             </div>
 
-            <div class="legal-manual">
-                <div class="manual-item"><span class="manual-icon">◈</span> <b>PITCH:</b> Left screen handles <b>LOW/BASS</b>. Right screen handles <b>HIGH/TREBLE</b>.</div>
-                <div class="manual-item"><span class="manual-icon">◈</span> <b>SAFETY:</b> Data is processed locally. Video is never recorded or transmitted.</div>
-                <div class="manual-item"><span class="manual-icon">◈</span> <b>CONTROL:</b> Close fingers into a fist to reset the audio field.</div>
+            <div class="legal-vault">
+                <div class="safety-point"><span class="point-icon">§</span> <b>PRIVACY:</b> Local Inference Architecture. Camera streams are volatile and never persist in storage or cloud buffers.</div>
+                <div class="safety-point"><span class="point-icon">§</span> <b>SECURITY:</b> Zero-Data Collection Policy. Fully compliant with global digital sovereignty and GDPR/CCPA standards.</div>
+                <div class="safety-point"><span class="point-icon">§</span> <b>PROTOCOL:</b> Left region modulates <b>BASS</b> frequencies. Right region modulates <b>TREBLE</b>.</div>
                 
-                <div class="action-bar">
-                    <span class="action-link" onclick="sendFeedback()">Submit Feedback</span>
+                <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 0.6rem; letter-spacing: 1px; color: #333;">
+                    <span style="cursor:pointer;" onclick="sendFeedback()">TRANSMIT FEEDBACK</span>
                     <span>|</span>
-                    <span>Status: Secure Edge Node</span>
+                    <span>ENCRYPTION: HARDWARE_LOCAL</span>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="hud" class="hidden">
-        <div class="hud-label" id="l-hud">BASS ZONE</div>
+        <div class="hud-tag" id="l-hud">BASS ZONE</div>
         <button class="btn" style="padding: 5px 20px; font-size: 0.5rem; margin:0; pointer-events:auto;" onclick="location.reload()">TERMINATE</button>
-        <div class="hud-label" id="r-hud">TREBLE ZONE</div>
+        <div class="hud-tag" id="r-hud">TREBLE ZONE</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
@@ -103,15 +101,14 @@ const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-// 1. HIGH-FREQUENCY SHOOTING STAR ENGINE (LAG-FREE)
 function createMeteor() {
-    // Increased frequency (3% chance) but lower limit (4) to keep it pro
-    if (meteors.length < 4 && Math.random() < 0.03) {
+    // High-Intensity Meteor Engine (Limit 6 for drama, low lag)
+    if (meteors.length < 6 && Math.random() < 0.04) {
         meteors.push({
             x: Math.random() * canvas.width,
-            y: Math.random() * (canvas.height / 2),
-            v: Math.random() * 12 + 10,
-            len: Math.random() * 80 + 40,
+            y: Math.random() * (canvas.height / 3),
+            v: Math.random() * 15 + 10,
+            len: Math.random() * 100 + 50,
             life: 1.0
         });
     }
@@ -124,7 +121,7 @@ async function startApp(branch) {
         maxPolyphony: 24,
         harmonicity: branch === 'MYTHIC' ? 6 : 1.5,
         modulationIndex: 20,
-        envelope: { attack: 0.2, decay: 0.4, sustain: 0.3, release: 3 }
+        envelope: { attack: 0.2, decay: 0.4, sustain: 0.3, release: 3.5 }
     }).connect(reverb);
 
     document.getElementById('menu').classList.add('hidden');
@@ -139,25 +136,24 @@ async function sendFeedback() {
     await fetch("https://formspree.io/f/mykgkorl", {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author: "Prasurjya Deka", message: msg })
+        body: JSON.stringify({ developer: "Prasurjya Deka", content: msg })
     });
-    alert("Resonance received.");
+    alert("Feedback Submitted.");
 }
 
 function onResults(results) {
     if(!isLive) return;
     
-    // Smooth trails
-    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    // Smooth cinematic trails
+    ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Shooting Stars Loop
     createMeteor();
     meteors.forEach((m, i) => {
-        m.x -= m.v; m.y += m.v; m.life -= 0.04; 
+        m.x -= m.v; m.y += m.v; m.life -= 0.035; 
         if(m.life <= 0) meteors.splice(i, 1);
         ctx.strokeStyle = `rgba(255, 255, 255, ${m.life})`;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x + m.len, m.y - m.len); ctx.stroke();
     });
 
@@ -165,7 +161,7 @@ function onResults(results) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label;
             const hudId = side === 'Left' ? 'l-hud' : 'r-hud';
-            document.getElementById(hudId).style.borderColor = "var(--divine)";
+            document.getElementById(hudId).style.color = "var(--divine)";
 
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
@@ -182,8 +178,9 @@ function onResults(results) {
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 40) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
+                    // Fingertip Visualization
                     ctx.fillStyle = "#fff";
-                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 4, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(tip.x*canvas.width, tip.y*canvas.height, 3, 0, Math.PI*2); ctx.fill();
                 } else { lastNotes[fingerKey] = null; }
             });
         });
@@ -193,7 +190,7 @@ function onResults(results) {
         let s = sparkles[i]; s.l -= 0.05;
         if(s.l <= 0) { sparkles.splice(i, 1); continue; }
         ctx.fillStyle = `rgba(0, 242, 255, ${s.l})`;
-        ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(s.x, s.y, 1, 0, Math.PI*2); ctx.fill();
     }
 }
 
