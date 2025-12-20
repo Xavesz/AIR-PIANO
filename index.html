@@ -3,94 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Quantum | Angelic Synthesis</title>
+    <title>Quantum Soul | Angelic Resonance</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --quantum: #bf00ff; --angelic: #00f2ff; --bg: #050510; }
+        :root { --quantum: #bf00ff; --divine: #00f2ff; --soul: #ffaa00; --bg: #020208; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
         
-        /* GUI Layers */
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); z-index: 1000; transition: opacity 0.5s ease; }
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); z-index: 1000; transition: 0.8s ease-in-out; }
         .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
         
-        .btn { padding: 18px 40px; border: 1px solid var(--angelic); background: transparent; color: var(--angelic); cursor: pointer; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 4px; transition: 0.3s; box-shadow: 0 0 15px rgba(0,242,255,0.2); }
-        .btn:hover { background: var(--angelic); color: #000; box-shadow: 0 0 40px var(--angelic); }
+        .btn { padding: 20px 50px; border: 1px solid var(--divine); background: transparent; color: var(--divine); cursor: pointer; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; transition: 0.4s; }
+        .btn:hover { background: var(--divine); color: #000; box-shadow: 0 0 50px var(--divine); transform: scale(1.05); }
 
-        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 25px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border-bottom: 1px solid rgba(191,0,255,0.2); }
+        #hud-top { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 30px; box-sizing: border-box; z-index: 500; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); }
         
-        #midi-stream { position: absolute; top: 110px; left: 25px; width: 220px; font-family: 'Courier New', monospace; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 15px; border-left: 2px solid var(--quantum); border-radius: 4px; pointer-events: none; z-index: 500; }
+        #coherence-meter { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 300px; text-align: center; z-index: 500; }
+        .meter-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+        #meter-fill { width: 0%; height: 100%; background: var(--divine); transition: 0.3s; box-shadow: 0 0 15px var(--divine); }
 
-        .manual-card { background: rgba(255,255,255,0.03); padding: 25px; border-radius: 15px; border: 1px solid #333; margin: 20px; max-width: 400px; text-align: left; line-height: 1.6; }
-        .manual-card b { color: var(--angelic); }
-        
-        #loading-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; pointer-events: none; display: none; }
-        .spinner { width: 100px; height: 100px; border: 3px solid transparent; border-top-color: var(--quantum); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .manual-card { background: rgba(255,255,255,0.02); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin: 20px; max-width: 450px; backdrop-filter: blur(10px); }
+        .manual-card h3 { color: var(--divine); margin-top: 0; letter-spacing: 2px; }
+        .manual-card ul { padding-left: 20px; color: #ccc; }
+        .manual-card li { margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
     <div id="menu-main" class="ui-layer">
-        <h1 style="font-size: 3rem; letter-spacing: 12px; margin-bottom: 0;">QUANTUM <span style="color:var(--angelic)">AIR</span></h1>
+        <h1 style="font-size: 3.5rem; letter-spacing: 15px; margin-bottom: 10px;">QUANTUM <span style="color:var(--divine)">SOUL</span></h1>
         <div class="manual-card">
-            <b>HOW TO PLAY:</b><br>
-            • 🖐 <b>Play:</b> Move fingers. Wave-like motions create angelic resonance.<br>
-            • ✊ <b>Mute:</b> Clench fist to silence the quantum stream.<br>
-            • 🔁 <b>Reset:</b> Both fists for 3s clears all audio echoes.<br>
-            • ⚙️ <b>Tip:</b> Best used in well-lit areas.
+            <h3>USER MANUAL: COHERENCE STAGE</h3>
+            <ul>
+                <li>🖐 <b>ANGELIC MODE:</b> Move fingers to trigger high-frequency physics tones.</li>
+                <li>✊ <b>RIGHT FIST:</b> Increase <b>Coherence</b>. Two waves overlap to create a massive, powerful sound.</li>
+                <li>✊ <b>LEFT FIST:</b> Lower sound intensity for delicate, ghostly textures.</li>
+                <li>✊✊ <b>BOTH FISTS:</b> The <b>Divine Soul State</b>. Deeply nostalgic, nostalgic quantum resonance.</li>
+                <li>🖐🖐 <b>OPEN BOTH:</b> Instantly return to standard Angelic Mode.</li>
+            </ul>
         </div>
-        <button class="btn" onclick="initStage()">ACTIVATE STAGE</button>
+        <button class="btn" onclick="initQuantumStage()">INITIATE RESONANCE</button>
     </div>
 
     <div id="hud-top" class="hidden">
-        <button class="btn" style="padding: 10px 20px; font-size: 0.7rem;" onclick="location.reload()">TERMINATE</button>
+        <button class="btn" style="padding: 10px 25px; font-size: 0.6rem;" onclick="location.reload()">TERMINATE</button>
         <div style="text-align: right">
-            <div id="mode-text" style="color: var(--angelic); font-weight: bold; letter-spacing: 2px;">ANGELIC MODE</div>
-            <div id="hand-stat" style="font-size: 0.7rem; color: #666;">COHERENCE: 0%</div>
+            <div id="state-text" style="color: var(--divine); font-weight: bold; letter-spacing: 3px; font-size: 1.2rem;">ANGELIC MODE</div>
+            <div id="hand-count" style="font-size: 0.7rem; color: #888; margin-top: 5px;">QUANTUM COHERENCE: 0%</div>
         </div>
     </div>
 
-    <div id="midi-stream" class="hidden">
-        <div style="opacity: 0.5; margin-bottom: 5px;">QUANTUM DATA:</div>
-        <div id="live-data">Waiting for detection...</div>
+    <div id="coherence-meter" class="hidden">
+        <div style="font-size: 0.7rem; letter-spacing: 2px; opacity: 0.8;">RESONANCE AMPLITUDE</div>
+        <div class="meter-bg"><div id="meter-fill"></div></div>
     </div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, isLive = false;
-let startTime = 0, bothFistStart = 0;
-const notes = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5','B5','C6'];
+let synth, lfo, filter, isLive = false;
+let coherence = 0; // 0 to 1
 let fingerStates = {}, ripples = [];
 
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-// ANGELIC QUANTUM SYNTH ENGINE
-async function initStage() {
+async function initQuantumStage() {
     await Tone.start();
-    // Custom FMSynth: Harmonic, Bell-like, and Quantum-shimmer
-    synth = new Tone.PolySynth(Tone.FMSynth, {
-        harmonicity: 3.5,
-        modulationIndex: 10,
-        oscillator: { type: "sine" },
-        envelope: { attack: 0.2, decay: 0.3, sustain: 0.4, release: 1.2 },
-        modulation: { type: "triangle" },
-        modulationEnvelope: { attack: 0.5, decay: 0 }
-    }).toDestination();
     
-    // Add Reverb for "Angelic" feel
-    const reverb = new Tone.Reverb(3).toDestination();
-    synth.connect(reverb);
+    // NOSTALGIC SOUL ENGINE (FM + ANALOG JITTER)
+    filter = new Tone.LowpassCombFilter(0.1, 0.5, 3000).toDestination();
+    const reverb = new Tone.Reverb({ decay: 5, wet: 0.6 }).connect(filter);
+    
+    synth = new Tone.PolySynth(Tone.FMSynth, {
+        harmonicity: 2,
+        modulationIndex: 2,
+        oscillator: { type: "sine" },
+        envelope: { attack: 0.4, release: 2 },
+        modulation: { type: "square" }
+    }).connect(reverb);
 
     document.getElementById('menu-main').classList.add('hidden');
-    document.getElementById('hud-top').classList.remove('hidden');
-    document.getElementById('midi-stream').classList.remove('hidden');
+    document.querySelectorAll('#hud-top, #coherence-meter').forEach(el => el.classList.remove('hidden'));
     
     isLive = true;
     startCamera();
@@ -100,70 +98,86 @@ function onResults(results) {
     if(!isLive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Smooth Visualizer Ripples
+    // Render Soul Ripples
     ripples.forEach((r, i) => {
-        r.rad += 3; r.alpha -= 0.015;
-        ctx.strokeStyle = `rgba(191,0,255,${r.alpha})`;
-        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        r.rad += 2.5; r.alpha -= 0.012;
+        ctx.strokeStyle = `rgba(${r.r}, ${r.g}, ${r.b}, ${r.alpha})`;
+        ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
         if(r.alpha <= 0) ripples.splice(i, 1);
     });
 
-    let handCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-    document.getElementById('hand-stat').innerText = `COHERENCE: ${handCount * 50}%`;
-
-    let dataHTML = "";
-    let anyFist = false;
     let rf = false, lf = false;
+    let handCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+    document.getElementById('hand-count').innerText = `QUANTUM COHERENCE: ${Math.round(coherence * 100)}%`;
 
     if (results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach((lm, i) => {
-            const label = results.multiHandedness[i].label; // Left/Right
+            const label = results.multiHandedness[i].label; // Mirrored
             const isFist = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y) < 0.13;
-            if(isFist) { 
-                anyFist = true; 
-                if(label === "Left") lf = true; else rf = true;
-            }
+            
+            if(isFist) { if(label === "Left") lf = true; else rf = true; }
 
-            // Finger Tracking
+            // Quantum Interactions
             [8, 12, 16, 20].forEach((id, fIdx) => {
                 const tip = lm[id];
                 const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
-                const active = tip.y > lm[id-1].y; // Natural finger bend trigger
+                const active = tip.y > lm[id-1].y;
 
-                if(active && !anyFist) {
+                if(active && !isFist) {
+                    const notes = ['C3','E3','G3','B3','C4','E4','G4','B4','D5','F5'];
                     const nIdx = Math.floor((1-tip.x) * (notes.length-1));
                     const note = notes[nIdx];
-                    
-                    dataHTML += `<div style="color:var(--angelic)">${label} Quantum → ${note}</div>`;
 
                     if(!fingerStates[`${label}_${id}`]) {
-                        synth.triggerAttackRelease(note, "2n", undefined, 0.5);
-                        ripples.push({x, y, rad: 5, alpha: 0.8, hue: nIdx*20});
+                        // Volume and Timbre scale with Coherence
+                        let vol = -15 + (coherence * 10);
+                        synth.triggerAttackRelease(note, "1n", undefined, Tone.dbToGain(vol));
+                        
+                        // Particle Color based on state
+                        let color = coherence > 0.8 ? {r:255, g:170, b:0} : {r:0, g:242, b:255};
+                        ripples.push({x, y, rad: 5, alpha: 0.8, ...color});
                         fingerStates[`${label}_${id}`] = true;
                     }
                 } else { fingerStates[`${label}_${id}`] = false; }
                 
-                // Draw Quantum Particle
-                ctx.fillStyle = active ? "var(--angelic)" : "white";
-                ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = active ? (coherence > 0.8 ? "var(--soul)" : "var(--divine)") : "white";
+                ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
             });
         });
-
-        // Both Fists Reset Logic
-        if(rf && lf) {
-            if(!bothFistStart) bothFistStart = Date.now();
-            if(Date.now() - bothFistStart > 3000) {
-                synth.releaseAll();
-                bothFistStart = Date.now() + 5000;
-                document.getElementById('mode-text').innerText = "SYSTEM RESET";
-                setTimeout(() => document.getElementById('mode-text').innerText = "ANGELIC MODE", 1000);
-            }
-        } else { bothFistStart = 0; }
     }
-    document.getElementById('live-data').innerHTML = dataHTML || "Listening...";
+
+    // UPDATE QUANTUM STATE MACHINE
+    const stateLabel = document.getElementById('state-text');
+    const meterFill = document.getElementById('meter-fill');
+
+    if(rf && lf) {
+        currentMode = "DIVINE SOUL";
+        coherence = Math.min(coherence + 0.01, 1.0);
+        stateLabel.innerText = "DIVINE SOUL STATE";
+        stateLabel.style.color = "var(--soul)";
+        synth.set({ modulationIndex: 25, harmonicity: 1.01 }); // Deep Soul vibration
+    } else if(rf) {
+        coherence = Math.min(coherence + 0.005, 0.7);
+        stateLabel.innerText = "CONSTRUCTIVE INTERFERENCE";
+        stateLabel.style.color = "var(--divine)";
+        synth.set({ modulationIndex: 10, harmonicity: 2 });
+    } else if(lf) {
+        coherence = Math.max(coherence - 0.005, 0.1);
+        stateLabel.innerText = "DESTRUCTIVE INTERFERENCE";
+        stateLabel.style.color = "#ff3333";
+        synth.set({ modulationIndex: 1, harmonicity: 4 });
+    } else {
+        // Naturally decay coherence unless holding fists
+        coherence = Math.max(coherence - 0.002, 0);
+        if(coherence < 0.1) {
+            stateLabel.innerText = "ANGELIC MODE";
+            stateLabel.style.color = "var(--divine)";
+            synth.set({ modulationIndex: 2, harmonicity: 2 });
+        }
+    }
+    meterFill.style.width = (coherence * 100) + "%";
 }
 
-// Low-Latency Camera Loop
 const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
 handTracker.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.7 });
 handTracker.onResults(onResults);
