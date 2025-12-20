@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quantum Soul | Prasurjya Deka</title>
+    <title>Quantum Soul | Neural Synthesis</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
@@ -11,49 +11,54 @@
         :root { --divine: #00f2ff; --gold: #ffd700; --bg: #010105; }
         body { margin: 0; background: var(--bg); color: white; overflow: hidden; font-family: sans-serif; }
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        
         .ui-layer { position: absolute; z-index: 1000; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #0a0a25 0%, #000 100%); transition: 1s; text-align: center; }
         .hidden { opacity: 0 !important; pointer-events: none; visibility: hidden; }
-        .btn { padding: 15px 35px; border: 2px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 10px; pointer-events: auto; }
+        
+        .btn { padding: 15px 40px; border: 1px solid var(--divine); background: transparent; color: var(--divine); border-radius: 50px; cursor: pointer; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; margin: 10px; transition: 0.4s; pointer-events: auto; }
         .btn:hover { background: var(--divine); color: black; box-shadow: 0 0 30px var(--divine); }
-        .btn-gold { border-color: var(--gold); color: var(--gold); }
-        .btn-gold:hover { background: var(--gold); box-shadow: 0 0 30px var(--gold); }
+        
         #hud { position: absolute; top: 25px; width: 100%; display: flex; justify-content: space-between; padding: 0 40px; z-index: 500; box-sizing: border-box; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.8); padding: 12px 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        #manual { max-width: 400px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; font-size: 0.85rem; }
-        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.7rem; color: #555; }
+        .stat-box { background: rgba(0,0,0,0.8); padding: 12px 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+        
+        #manual { max-width: 420px; background: rgba(255,255,255,0.02); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 25px; font-size: 0.85rem; line-height: 1.6; }
+        
+        footer { position: absolute; bottom: 20px; width: 100%; text-align: center; z-index: 1100; font-size: 0.7rem; color: #444; letter-spacing: 2px; }
+        footer button { background: none; border: none; color: #444; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; transition: 0.3s; }
+        footer button:hover { color: var(--divine); }
     </style>
 </head>
 <body>
 
     <div id="menu" class="ui-layer">
-        <h1 style="letter-spacing:15px; margin-bottom: 5px;">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
-        <div style="font-size: 0.6rem; color: #666; letter-spacing: 5px; margin-bottom: 25px;">CREATED BY PRASURJYA DEKA</div>
+        <h1 style="letter-spacing:20px; margin-bottom: 5px;">QUANTUM <span style="color:var(--gold)">SOUL</span></h1>
+        <div style="font-size: 0.6rem; color: #444; letter-spacing: 6px; margin-bottom: 30px;">PRASURJYA DEKA</div>
         
         <div id="manual">
-            <b style="color:var(--gold);">SELECT MAGIC BRANCH:</b><br><br>
-            • 🖐 <b>Fingers:</b> extended fingers play tunes.<br>
-            • ✨ <b>Glitter:</b> Golden stardust follows your touch.<br>
-            • ✊ <b>Fist:</b> Mutes sound to protect the silence.
+            <b style="color:var(--gold); letter-spacing: 2px;">THE RESONANCE GUIDE:</b><br><br>
+            ✨ <b>Precision:</b> Extend individual fingers to play tones.<br>
+            ✨ <b>Texture:</b> Move fingers horizontally to shift frequencies.<br>
+            ✨ <b>Stability:</b> Both fists will clear the current audio field.<br>
+            ✨ <b>Aesthetics:</b> Neural glitter tracks every melodic path.
         </div>
         
-        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            <button class="btn btn-gold" onclick="startApp('HOGWARTS')">Hogwarts Magic</button>
-            <button class="btn" onclick="startApp('INTERSTELLAR')">Interstellar Soul</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="border-color: var(--gold); color: var(--gold);" onclick="startApp('CRYSTAL')">Crystal Branch</button>
+            <button class="btn" onclick="startApp('SOUL')">Soul Branch</button>
         </div>
     </div>
 
     <div id="hud" class="hidden">
-        <button class="btn" style="padding:8px 20px; font-size:0.6rem; pointer-events: auto; margin:0;" onclick="location.reload()">BACK</button>
+        <button class="btn" style="padding:8px 20px; font-size:0.6rem; pointer-events: auto; margin:0;" onclick="location.reload()">TERMINATE</button>
         <div class="stat-box">
-            <div id="state-text" style="color:var(--gold); font-weight:bold; letter-spacing:2px;">ACTIVE</div>
-            <div id="mode-info" style="font-size:0.6rem; color:#888;">FINGER PRECISION ENABLED</div>
+            <div id="state-text" style="color:var(--gold); font-weight:bold; letter-spacing:2px;">SYNTHESIS ACTIVE</div>
         </div>
     </div>
 
     <footer>
         <span>© Prasurjya Deka</span> | 
         <form action="https://formspree.io/f/mykgkorl" method="POST" style="display:inline;">
-            <button type="submit" style="background:none; border:none; color:#555; cursor:pointer; text-transform:uppercase;">Feedback</button>
+            <button type="submit">Contact Feedback</button>
         </form>
     </footer>
 
@@ -72,22 +77,21 @@ async function startApp(branch) {
     try {
         await Tone.start();
         currentBranch = branch;
-        const reverb = new Tone.Reverb(7).toDestination();
+        const reverb = new Tone.Reverb(8).toDestination();
         
-        let config = { harmonicity: 5, modulationIndex: 15 }; // Hogwarts: High chime
-        if(branch === 'INTERSTELLAR') config = { harmonicity: 2, modulationIndex: 8 };
+        let config = { harmonicity: 5, modulationIndex: 12 }; // Crystal Tones
+        if(branch === 'SOUL') config = { harmonicity: 2, modulationIndex: 20 };
 
         synth = new Tone.PolySynth(Tone.FMSynth, {
             ...config,
-            envelope: { attack: 0.1, decay: 0.5, sustain: 0.4, release: 4 }
+            envelope: { attack: 0.15, decay: 0.5, sustain: 0.4, release: 4 }
         }).connect(reverb);
 
         document.getElementById('menu').classList.add('hidden');
         document.getElementById('hud').classList.remove('hidden');
-        document.getElementById('state-text').innerText = branch + " MODE";
         isLive = true;
         initTracking();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.log("Audio Init Error"); }
 }
 
 function onResults(results) {
@@ -98,19 +102,15 @@ function onResults(results) {
         results.multiHandLandmarks.forEach((lm, i) => {
             const side = results.multiHandedness[i].label;
 
-            // FINGER TIP ID: 8(Index), 12(Mid), 16(Ring), 20(Pinky)
             [8, 12, 16, 20].forEach((id) => {
                 const tip = lm[id];
                 const pip = lm[id-2]; 
                 const x = tip.x * canvas.width;
                 const y = tip.y * canvas.height;
-                
-                // Detection: Finger must be higher than the joint to play
                 const isExtended = tip.y < pip.y;
 
                 if(isExtended) {
-                    // Crystalline Scale for Magic feel
-                    const scale = (currentBranch === 'HOGWARTS') ? 
+                    const scale = (currentBranch === 'CRYSTAL') ? 
                         ['B3','E4','G4','Gb4','E4','B4','A4','Gb4'] : 
                         ['A3','C4','E4','G4','B4','C5','E5','G5'];
 
@@ -121,35 +121,39 @@ function onResults(results) {
                         fingerStates[`${side}_${id}`] = true;
                     }
 
-                    // GOLDEN SPARKLES
-                    for(let k=0; k<4; k++) {
+                    // NEURAL GLITTER PARTICLES
+                    for(let k=0; k<3; k++) {
                         sparkles.push({
                             x, y, 
-                            vx: (Math.random()-0.5) * 1.5, 
-                            vy: (Math.random()-0.5) * 1.5, 
+                            vx: (Math.random()-0.5) * 1.2, 
+                            vy: (Math.random()-0.5) * 1.2, 
                             life: 1.0, 
-                            size: Math.random() * 2.5
+                            size: Math.random() * 2,
+                            color: currentBranch === 'CRYSTAL' ? '0,242,255' : '255,215,0'
                         });
                     }
+                    
+                    // WELL HIDDEN BIOLUMINESCENT POINTS
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = `rgba(${currentBranch === 'CRYSTAL' ? '0,242,255' : '255,215,0'}, 0.5)`;
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.8)`;
+                    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+                    ctx.shadowBlur = 0;
                 } else {
                     if(fingerStates[`${side}_${id}`]) {
                         synth.releaseAll(); 
                         fingerStates[`${side}_${id}`] = false;
                     }
                 }
-
-                ctx.fillStyle = isExtended ? "var(--gold)" : "rgba(255,255,255,0.1)";
-                ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
             });
         });
     }
 
-    // SPARKLE PHYSICS
+    // PARTICLE ENGINE
     sparkles.forEach((s, i) => {
         s.x += s.vx; s.y += s.vy;
-        s.vy += 0.015; // Gravity
-        s.life -= 0.02;
-        ctx.fillStyle = `rgba(255, 215, 0, ${s.life})`;
+        s.life -= 0.015;
+        ctx.fillStyle = `rgba(${s.color}, ${s.life})`;
         ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
         if(s.life <= 0) sparkles.splice(i, 1);
     });
@@ -157,7 +161,7 @@ function onResults(results) {
 
 function initTracking() {
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.75 });
+    hands.setOptions({ maxNumHands: 2, modelComplexity: 0, minDetectionConfidence: 0.8 });
     hands.onResults(onResults);
     new Camera(video, {
         onFrame: async () => {
