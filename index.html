@@ -14,6 +14,7 @@
         
         #output_canvas, #input_video { transform: scaleX(-1); width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; object-fit: cover; }
 
+        /* Professional Interface Layer */
         .ui-layer { 
             position: absolute; z-index: 1000; width: 100%; height: 100%; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -22,6 +23,7 @@
         }
         .hidden { opacity: 0 !important; pointer-events: none; filter: blur(50px); }
 
+        /* Pulsating Neon Aura */
         .neon-pulse-aura {
             position: absolute; width: 650px; height: 650px; border-radius: 50%;
             background: radial-gradient(circle, rgba(0, 242, 255, 0.18) 0%, transparent 70%);
@@ -29,6 +31,7 @@
         }
         @keyframes pulse-aura { 0%, 100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.3); opacity: 0.5; } }
 
+        /* The Executive Frame */
         .executive-panel {
             position: relative; padding: 50px; border-radius: 8px;
             background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.15);
@@ -37,12 +40,7 @@
         }
 
         .main-header { font-size: clamp(2rem, 8vw, 2.8rem); letter-spacing: 25px; font-weight: 800; text-transform: uppercase; margin: 0; text-shadow: 0 0 30px rgba(255,255,255,0.2); }
-        .designer-credit { font-size: 0.75rem; color: var(--accent); letter-spacing: 12px; margin: 25px 0 30px; font-weight: 500; text-transform: uppercase; }
-
-        /* Rating System */
-        .rating-box { margin-bottom: 30px; display: flex; justify-content: center; gap: 10px; }
-        .star { cursor: pointer; font-size: 1.5rem; color: rgba(255,255,255,0.2); transition: 0.3s; }
-        .star:hover, .star.selected { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+        .designer-credit { font-size: 0.75rem; color: var(--accent); letter-spacing: 12px; margin: 25px 0 40px; font-weight: 500; text-transform: uppercase; }
 
         .btn-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 45px; }
         .btn-vanguard { 
@@ -53,6 +51,7 @@
         .btn-vanguard:hover { border-color: var(--accent); background: rgba(0, 242, 255, 0.15); box-shadow: 0 0 30px rgba(0,242,255,0.3); }
         .btn-gold { border-color: rgba(255,215,0,0.4); color: var(--gold); }
 
+        /* Safety & Instruction Disclosure */
         .info-disclosure { text-align: left; font-size: 0.85rem; color: #fff; line-height: 1.8; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 35px; }
         .section-tag { color: var(--accent); font-weight: 800; font-size: 0.65rem; letter-spacing: 4px; display: block; margin-bottom: 15px; text-transform: uppercase; }
         .manual-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; color: #cbd5e0; font-weight: 500; }
@@ -73,14 +72,6 @@
             <h1 class="main-header">QUANTUM SOUL</h1>
             <div class="designer-credit">DESIGNED BY PRASURJYA DEKA</div>
             
-            <div class="rating-box" id="rating">
-                <span class="star" data-value="1">★</span>
-                <span class="star" data-value="2">★</span>
-                <span class="star" data-value="3">★</span>
-                <span class="star" data-value="4">★</span>
-                <span class="star" data-value="5">★</span>
-            </div>
-
             <div class="btn-row">
                 <button class="btn-vanguard btn-gold" onclick="startApp('MYTHIC')">Mythic Branch</button>
                 <button class="btn-vanguard" onclick="startApp('SOUL')">Soul Branch</button>
@@ -92,10 +83,10 @@
                     <div><b>• PITCH ENGINE:</b><br>RIGHT = High Melodies<br>LEFT = Low Bass</div>
                     <div><b>• TRACKING:</b><br>Halo Rings glow when active<br>Fist = Global Mute</div>
                 </div>
-                <b>PRIVACY:</b> This system uses <b>Local Inference</b>. Video is processed in RAM and never stored or transmitted.
+                <b>PRIVACY:</b> This system uses <b>Local Inference</b>. Video is processed in RAM and never stored or transmitted. 100% secure client-side execution.
                 
                 <div class="footer-tray">
-                    <button class="footer-link" onclick="sendFeedback()">Feedback</button>
+                    <button class="footer-link" onclick="sendFeedback()">Submit Feedback</button>
                     <button class="footer-link" onclick="shareApp()">Share App</button>
                     <span style="color:#4a5568; font-size:0.65rem; letter-spacing:2px; font-weight:800;">STATUS: ENCRYPTED_LOCAL</span>
                 </div>
@@ -118,29 +109,18 @@ const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 const video = document.getElementById('input_video');
 
-// Rating System Logic
-document.querySelectorAll('.star').forEach(star => {
-    star.addEventListener('click', (e) => {
-        const val = e.target.getAttribute('data-value');
-        document.querySelectorAll('.star').forEach(s => {
-            s.classList.toggle('selected', s.getAttribute('data-value') <= val);
-        });
-        console.log(`User Rated: ${val} Stars`);
-    });
-});
-
 // Share Function
 async function shareApp() {
     if (navigator.share) {
         try {
             await navigator.share({
                 title: 'Quantum Soul',
-                text: 'Experience the future of gesture-controlled sound with Quantum Soul.',
+                text: 'Gesture-controlled sound engine by Prasurjya Deka.',
                 url: window.location.href
             });
         } catch (err) { console.error("Share failed", err); }
     } else {
-        alert("Copy this link to share: " + window.location.href);
+        alert("Link: " + window.location.href);
     }
 }
 
@@ -172,7 +152,7 @@ async function startApp(branch) {
 }
 
 async function sendFeedback() {
-    const msg = prompt("Submit direct feedback for Prasurjya Deka:");
+    const msg = prompt("Submit feedback for Prasurjya Deka:");
     if (!msg) return;
     try {
         await fetch("https://formspree.io/f/mykgkorl", {
@@ -219,6 +199,7 @@ function onResults(results) {
                         lastNotes[fingerKey] = note;
                         if(sparkles.length < 40) sparkles.push({x: tip.x*canvas.width, y: tip.y*canvas.height, l: 1.0});
                     }
+                    // NEURAL HALO RINGS
                     ctx.shadowBlur = 25;
                     ctx.shadowColor = "#00f2ff";
                     ctx.strokeStyle = "#fff";
