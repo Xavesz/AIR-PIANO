@@ -3,99 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Air Piano Pro | Universal Edition</title>
+    <title>Air Piano Pro | Ultimate Fixed</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --gold: #ffd700; }
-        body { margin: 0; background: radial-gradient(circle, #0d1117 0%, #010409 100%); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        canvas { width: 100vw; height: 100vh; position: absolute; z-index: 5; }
+        :root { --neon: #00f2ff; --rec: #ff3333; --play: #00ff88; --new: #bf00ff; --stop: #ffa500; }
+        body { margin: 0; background: #000; color: white; overflow: hidden; font-family: 'Arial Black', sans-serif; }
         
-        /* Main Menu Interface */
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); z-index: 1000; }
+        /* Ensure Camera stays behind UI */
+        canvas { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* High Visibility UI Layers */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 2000; text-align: center; }
         .hidden { display: none !important; }
         
-        .btn { padding: 12px 25px; border: 2px solid var(--neon); background: transparent; color: var(--neon); cursor: pointer; border-radius: 4px; font-weight: bold; margin: 8px; text-transform: uppercase; transition: 0.3s; }
+        /* UI Components */
+        .btn { padding: 15px 30px; border: 3px solid var(--neon); background: #111; color: var(--neon); cursor: pointer; border-radius: 8px; font-weight: bold; margin: 10px; text-transform: uppercase; z-index: 2100; }
         .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
-        .btn-active { background: var(--neon); color: black; }
+        
+        #hud-top { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box; z-index: 500; pointer-events: none; }
+        .hud-pill { background: rgba(0,0,0,0.8); border: 2px solid var(--neon); padding: 10px 20px; border-radius: 5px; font-weight: bold; pointer-events: auto; }
 
-        /* Mixer with Pitch Scroll */
-        .pane { background: #111; padding: 25px; border-radius: 10px; width: 85%; max-height: 75%; overflow-y: auto; border: 1px solid #333; }
-        .mixer-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
-        .pitch-scroll { width: 120px; cursor: ew-resize; background: #222; padding: 5px; border-radius: 4px; text-align: center; color: var(--neon); font-size: 0.8rem; }
+        /* BOLD COUNTDOWN */
+        #countdown-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; text-align: center; pointer-events: none; }
+        #timer-msg { font-size: 3rem; color: #fff; text-shadow: 0 0 10px #000; letter-spacing: 5px; }
+        #timer-val { font-size: 15rem; font-weight: 900; color: var(--neon); text-shadow: 10px 10px 0 #000; line-height: 1; }
 
-        /* HUD */
-        #hud-top { position: absolute; top: 20px; width: 95%; display: flex; justify-content: space-between; left: 2.5%; z-index: 500; pointer-events: none; }
-        .hud-pill { background: rgba(0,0,0,0.7); border: 1px solid var(--neon); padding: 8px 15px; border-radius: 5px; font-size: 0.9rem; pointer-events: auto; }
-
-        #timer-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 900; text-align: center; pointer-events: none; }
+        .pane { background: #111; padding: 30px; border: 2px solid #333; border-radius: 10px; width: 85%; max-height: 70%; overflow-y: auto; }
+        .mixer-row { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-bottom: 1px solid #333; }
+        select { background: #222; color: var(--neon); border: 1px solid var(--neon); padding: 5px; font-size: 1rem; }
     </style>
 </head>
 <body>
 
     <div id="ui-main" class="overlay">
-        <h1 style="font-size: 3.5rem; letter-spacing: 10px; margin-bottom: 0;">AIR PIANO <span style="color:var(--neon)">PRO</span></h1>
-        <p style="color: #666; margin-bottom: 30px;">GLOBAL VIRTUAL STAGE</p>
-        
-        <button class="btn" style="font-size: 1.5rem; border-color: var(--play); color: var(--play);" onclick="startApp()">LAUNCH PERFORMANCE</button>
-        
-        <div style="display:flex; gap: 10px;">
-            <button class="btn" onclick="showPane('settings')">Settings & Mixer</button>
-            <button class="btn" onclick="showPane('library')">Saved Library</button>
+        <h1 style="font-size: 4rem; color: var(--neon); margin: 0;">AIR PIANO PRO</h1>
+        <p style="margin-bottom: 40px;">GESTURE CONTROLLED PERFORMANCE</p>
+        <button class="btn" onclick="startPerformance()">LAUNCH STAGE</button>
+        <div style="display:flex;">
+            <button class="btn" onclick="showPane('settings')">Settings/Mixer</button>
+            <button class="btn" onclick="showPane('library')">Library</button>
         </div>
-
-        <div style="margin-top: 20px;">
-            <button class="btn" id="lh-toggle" onclick="toggleLeftHand()">Left-Hand Mode: OFF</button>
-            <button class="btn" style="border-color: #fff; color: #fff;" onclick="shareApp()">Share Link</button>
-        </div>
+        <button class="btn" onclick="shareApp()">Share link</button>
     </div>
 
     <div id="ui-settings" class="overlay hidden">
         <div class="pane">
-            <h3 style="color: var(--neon)">FINGER MIXER & PITCH ADJUST</h3>
+            <h3 style="color:var(--neon)">FINGER PITCH & ASSIGNMENT</h3>
             <div id="mixer-container"></div>
         </div>
-        <button class="btn" onclick="showPane('main')">SAVE & RETURN</button>
+        <button class="btn" onclick="showPane('main')">Save & Back</button>
     </div>
 
     <div id="ui-library" class="overlay hidden">
         <div class="pane">
-            <h3 style="color: var(--play)">YOUR RECORDINGS</h3>
-            <div id="tunes-list">No tunes found yet.</div>
+            <h3 style="color:var(--play)">YOUR RECORDINGS</h3>
+            <div id="library-list">No tracks found.</div>
         </div>
-        <button class="btn" onclick="showPane('main')">BACK TO MENU</button>
+        <button class="btn" onclick="showPane('main')">Back</button>
     </div>
 
     <div id="hud-top" class="hidden">
-        <button class="btn" style="margin:0; pointer-events: auto;" onclick="location.reload()">MENU</button>
-        <div id="mode-pill" class="hud-pill">PERFORM</div>
+        <button class="btn" style="margin:0; pointer-events:auto;" onclick="location.reload()">EXIT MENU</button>
+        <div id="mode-pill" class="hud-pill">MODE: PERFORM</div>
     </div>
 
-    <div id="timer-box" class="hidden">
-        <div id="timer-msg" style="font-size: 2rem; letter-spacing: 5px; font-weight: bold;"></div>
-        <div id="timer-val" style="font-size: 10rem; font-weight: 900;">3</div>
+    <div id="countdown-box" class="hidden">
+        <div id="timer-msg">RECORDING</div>
+        <div id="timer-val">3</div>
     </div>
 
     <canvas id="output_canvas"></canvas>
     <video id="input_video" style="display:none" playsinline></video>
 
 <script>
-let synth, recording = [], library = [], isLive = false, currentMode = 'PERFORM';
-let isLeftHanded = false, rFistTime = 0, lFistTime = 0, bothOpenTime = 0, startTime = 0;
+// --- INITIALIZE AUDIO ENGINE ---
+let synth = new Tone.PolySynth(Tone.Synth).toDestination();
+let recording = [], library = [], isLive = false, currentMode = 'PERFORM';
+let rFistStart = 0, lFistStart = 0, bothOpenStart = 0, startTime = 0;
+
 const notes = ['C3','D3','E3','F3','G3','A3','B3','C4','D4','E4','F4','G4','A4','B4','C5'];
-let fingerPitches = [...notes]; // For pitch scrolling
+let fingerNotes = [...notes.slice(0,10)];
 let fingerStates = {}, ripples = [];
 
 const video = document.getElementById('input_video');
 const canvas = document.getElementById('output_canvas');
 const ctx = canvas.getContext('2d');
 
-// --- APP ROUTING ---
-async function startApp() {
+async function startPerformance() {
     await Tone.start();
-    synth = new Tone.PolySynth(Tone.Synth).toDestination();
     document.getElementById('ui-main').classList.add('hidden');
     document.getElementById('hud-top').classList.remove('hidden');
     isLive = true;
@@ -108,33 +106,19 @@ function showPane(pane) {
     if(pane === 'library') renderLibrary();
 }
 
-function toggleLeftHand() {
-    isLeftHanded = !isLeftHanded;
-    const btn = document.getElementById('lh-toggle');
-    btn.innerText = `Left-Hand Mode: ${isLeftHanded ? 'ON' : 'OFF'}`;
-    btn.classList.toggle('btn-active');
-}
-
-function shareApp() {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Share link copied! Send to your friends.");
-}
-
-// --- MIXER GEN ---
+// Generate Mixer UI
 const mixer = document.getElementById('mixer-container');
 ['L-Pinky','L-Ring','L-Mid','L-Index','L-Thumb','R-Thumb','R-Index','R-Mid','R-Ring','R-Pinky'].forEach((name, i) => {
-    mixer.innerHTML += `<div class="mixer-row">
-        <span>${name}</span>
-        <div class="pitch-scroll" title="Scroll to change pitch">
-            <select onchange="fingerPitches[${i}]=this.value" style="background:transparent; color:var(--neon); border:none;">
-                ${notes.map(n => `<option ${n===notes[i]?'selected':''}>${n}</option>`).join('')}
+    mixer.innerHTML += `
+        <div class="mixer-row">
+            <span>${name}</span>
+            <select onchange="fingerNotes[${i}]=this.value">
+                ${notes.map(n => `<option ${n==notes[i]?'selected':''}>${n}</option>`).join('')}
             </select>
-        </div>
-        <button class="btn" style="padding:5px 15px" onclick="synth.triggerAttackRelease(fingerPitches[${i}],'8n')">TEST</button>
-    </div>`;
+            <button class="btn" style="padding:5px 10px" onclick="synth.triggerAttackRelease(fingerNotes[${i}], '8n')">TEST</button>
+        </div>`;
 });
 
-// --- GESTURE & LOGIC ---
 function isClenched(lm) {
     const d = Math.hypot(lm[8].x - lm[0].x, lm[8].y - lm[0].y);
     return d < 0.14;
@@ -145,11 +129,11 @@ function onResults(results) {
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Wave Visuals
+    // Draw Visual ripples
     ripples.forEach((r, i) => {
-        r.rad += 3.5; r.alpha -= 0.015;
+        r.rad += 4; r.alpha -= 0.02;
         ctx.strokeStyle = `rgba(0, 242, 255, ${r.alpha})`;
-        ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
+        ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(r.x, r.y, r.rad, 0, Math.PI*2); ctx.stroke();
         if(r.alpha <= 0) ripples.splice(i, 1);
     });
 
@@ -166,82 +150,57 @@ function onResults(results) {
 
             if(!clench) {
                 [4, 8, 12, 16, 20].forEach((id, fIdx) => {
-                    const tip = lm[id];
-                    const x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
-                    const isBent = tip.y > lm[id-1].y;
+                    const tip = lm[id], x = (1-tip.x) * canvas.width, y = tip.y * canvas.height;
+                    const bent = tip.y > lm[id-1].y;
                     
-                    if(isBent && !fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
-                        const note = fingerPitches[fIdx + (side==='Right'?5:0)];
+                    if(bent && !fingerStates[`${side}_${id}`] && (currentMode==='PERFORM' || currentMode==='RECORDING')) {
+                        const note = fingerNotes[fIdx + (side==='Right'?5:0)];
                         synth.triggerAttackRelease(note, "4n");
                         ripples.push({x, y, rad: 5, alpha: 1.0});
                         if(currentMode === 'RECORDING') recording.push({note, time: Date.now()-startTime});
                         fingerStates[`${side}_${id}`] = true;
-                    } else if(!isBent) fingerStates[`${side}_${id}`] = false;
-                    ctx.fillStyle = isBent ? "var(--play)" : "white";
-                    ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI*2); ctx.fill();
+                    } else if(!bent) fingerStates[`${side}_${id}`] = false;
+                    
+                    ctx.fillStyle = bent ? "var(--play)" : "white";
+                    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI*2); ctx.fill();
                 });
             }
         });
     }
 
-    // --- STATE MACHINE (ADJUSTED FOR LH MODE) ---
-    const now = Date.now(), box = document.getElementById('timer-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg');
-    
-    // Determine which hand does what
-    const recHand = isLeftHanded ? lf : rf;
-    const playHand = isLeftHanded ? rf : lf;
+    // STATE MACHINE
+    const now = Date.now(), box = document.getElementById('countdown-box'), val = document.getElementById('timer-val'), msg = document.getElementById('timer-msg');
 
-    if(recHand && !playHand) {
-        if(!rFistTime) rFistTime = now;
-        let elap = Math.floor((now-rFistTime)/1000);
-        box.classList.remove('hidden'); val.innerText = 3-elap;
-        msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
-        msg.style.color = currentMode==='RECORDING' ? "var(--stop)" : "var(--rec)";
-        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING'){recording=[]; startTime=now;} rFistTime=now+4000; box.classList.add('hidden'); }
-    } else if(playHand && !recHand && currentMode==='STOP') {
-        if(!lFistTime) lFistTime = now;
-        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistTime)/1000);
-        msg.innerText = "PLAYBACK"; msg.style.color = "var(--play)";
-        if(now-lFistTime >= 3000) {
-            currentMode = 'PLAY'; box.classList.add('hidden');
-            recording.forEach(e => setTimeout(()=>synth.triggerAttackRelease(e.note,"4n"), e.time));
-            setTimeout(()=>currentMode='STOP', (recording[recording.length-1]?.time||0)+1000);
-            lFistTime = now+4000;
-        }
-    } else if(bo && results.multiHandLandmarks?.length === 2 && currentMode === 'STOP') {
-        if(!bothOpenTime) bothOpenTime = now;
-        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-bothOpenTime)/1000);
-        msg.innerText = "SAVING"; msg.style.color = "var(--neon)";
-        if(now-bothOpenTime >= 3000) { library.push({name: "Tune_"+Date.now(), data: [...recording]}); bothOpenTime=now+4000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'),1500); }
-    } else { rFistTime = lFistTime = bothOpenTime = 0; box.classList.add('hidden'); }
-    document.getElementById('mode-pill').innerText = currentMode;
+    if(rf && !lf) {
+        if(!rFistStart) rFistStart = now;
+        let elap = Math.floor((now-rFistStart)/1000);
+        box.classList.remove('hidden'); val.innerText = 3-elap; msg.innerText = currentMode==='RECORDING' ? "STOPPING" : "RECORDING";
+        if(elap >= 3) { currentMode = currentMode==='RECORDING'?'STOP':'RECORDING'; if(currentMode==='RECORDING'){recording=[]; startTime=now;} rFistStart=now+5000; box.classList.add('hidden'); }
+    } else if(lf && !rf && currentMode==='STOP') {
+        if(!lFistStart) lFistStart = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-lFistStart)/1000); msg.innerText = "PLAYING";
+        if(now-lFistStart >= 3000) { currentMode='PLAY'; box.classList.add('hidden'); recording.forEach(e => setTimeout(()=>synth.triggerAttackRelease(e.note,"4n"), e.time)); setTimeout(()=>currentMode='STOP', (recording[recording.length-1]?.time||0)+1000); lFistStart=now+5000; }
+    } else if (bo && results.multiHandLandmarks?.length === 2 && currentMode === 'STOP') {
+        if(!bothOpenStart) bothOpenStart = now;
+        box.classList.remove('hidden'); val.innerText = 3-Math.floor((now-bothOpenStart)/1000); msg.innerText = "SAVING";
+        if(now-bothOpenStart >= 3000) { library.push({name: "Tune_"+Date.now(), data: [...recording]}); bothOpenStart=now+5000; val.innerText="SAVED"; setTimeout(()=>box.classList.add('hidden'), 1500); }
+    } else { rFistStart = lFistStart = bothOpenStart = 0; box.classList.add('hidden'); }
+    document.getElementById('mode-pill').innerText = "MODE: " + currentMode;
     ctx.restore();
 }
 
 function renderLibrary() {
-    const list = document.getElementById('tunes-list');
-    if(library.length === 0) { list.innerHTML = "<p>Empty Library.</p>"; return; }
+    const list = document.getElementById('library-list');
+    if(library.length === 0) return;
     list.innerHTML = library.map((t, i) => `
-        <div style="background:#222; margin:10px; padding:15px; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="background:#222; margin:10px; padding:15px; display:flex; justify-content:space-between;">
             <span>${t.name}</span>
-            <div>
-                <button class="btn" style="padding:5px 15px" onclick="playStored(${i})">PLAY</button>
-                <button class="btn" style="padding:5px 15px; border-color:white; color:white;" onclick="downloadTune(${i})">SAVE</button>
-            </div>
-        </div>
-    `).join('');
+            <button class="btn" style="padding:5px 10px" onclick="playStored(${i})">PLAY</button>
+        </div>`).join('');
 }
 
-function playStored(idx) {
-    const tune = library[idx].data;
-    tune.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time));
-}
-
-function downloadTune(i) {
-    const blob = new Blob([JSON.stringify(library[i].data)], {type: 'text/plain'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `tune-${i+1}.txt`; a.click();
-}
+function playStored(i) { library[i].data.forEach(e => setTimeout(() => synth.triggerAttackRelease(e.note, "4n"), e.time)); }
+function shareApp() { navigator.clipboard.writeText(window.location.href); alert("Link Copied!"); }
 
 const handTracker = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
 handTracker.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8 });
